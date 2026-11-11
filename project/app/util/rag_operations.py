@@ -11,7 +11,6 @@ import spacy
 import json
 import time
 import os
-UTIL_DIR = os.path.dirname(os.path.abspath(__file__))
 import re
 import gc
 
