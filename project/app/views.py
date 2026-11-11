@@ -1,17 +1,45 @@
-from django.shortcuts import render
-from flask import request
 from app.util.db_manager import DBManager
-from django.shortcuts import redirect
-from app.util.main import main as util_main
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.http import Http404, JsonResponse
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
+from django.db import transaction
+from django.views.decorators.http import require_POST
 import json
-from django.http import JsonResponse
-from app.util.scrapper import update
+import logging
 import datetime
 from django.shortcuts import render, redirect
-from .forms import CustomUserCreationForm
+from .forms import CustomUserCreationForm, UserSettingsForm
 from django.contrib.auth.decorators import login_required
+
+logger = logging.getLogger(__name__)
+
+# Columnas de las tablas AnexoI y anexoI_fuentes, en orden
+CAMPOS_ANEXO = [
+    "COD", "Regulacion_armonizada", "Sometido_recurso_especial", "Plazo_ejecución", "Presupuesto_sinIVA",
+    "Presupuesto_conIVA", "Importe_IVA", "Sistema_Retribucion", "Valor_estimado", "Revision_precios",
+    "Garantia_definitiva", "Garantia_provisional", "Admisibilidad_variantes", "Clasificacion", "Grupo",
+    "Subgrupo", "Categoria", "Criterio_Solvencia_economica", "Criterio_Solvencia_tecnica",
+    "Condiciones_especiales", "Penalidad_incumplimiento", "Forma_pago", "Causas_modificacion",
+    "Plazo_garantia", "Contratacion_precio_unit", "Tanto_alzado", "Tanto_alzado_con", "Criterio_juicio_val",
+    "Evaluables_autom", "Criterio_ecónomico", "Obligaciones_ambientales", "Regimen_penalidades", "Ambiental",
+    "Tecnico", "Precio", "Garantia", "Experiencia", "Calidad", "Social", "Seguridad", "Juicio_valor",
+    "Formula_precio", "Formula_JuicioValor", "Criterios_valores_anormales", "Infraccion_grave",
+    "Gastos_desistimiento", "Contratacion_control", "Tareas_criticas",
+]
+
+
+def _error_interno(mensaje):
+    # La traza completa queda en el log del servidor; al cliente solo le llega un mensaje genérico
+    logger.exception(mensaje)
+    return JsonResponse({'success': False, 'error': 'Error interno'}, status=500)
+
+
+def _json_body(request):
+    try:
+        data = json.loads(request.body or b"{}")
+    except ValueError:
+        return {}
+    return data if isinstance(data, dict) else {}
 
 cod_documento = ""
 
@@ -20,6 +48,7 @@ def home(request):
     return redirect('app:licitaciones')
 
 
+@login_required
 def licitaciones_view(request):
     db = DBManager()
     db.openConnection()
@@ -212,22 +241,53 @@ from django.contrib.auth.decorators import login_required
 
 @login_required
 def user_settings(request):
-    db = DBManager()
-    db.openConnection()
-    user = request.user.username
-
-    # Busca los datos del usuario en la tabla usuarios
-    datos = db.searchTable("auth_user", {"username": user})
-
-    db.closeConnection()
-    # Ajusta los índices según el orden de tu tabla usuarios
     context = {
-        'username': datos[4],      # username
-        'email': datos[7],         # email
-        'password': datos[1],      # password (¡no recomendable mostrarla!)
+        'username': request.user.username,
+        'email': request.user.email,
     }
-
     return render(request, 'user_settings.html', context)
+
+
+@login_required
+@require_POST
+def actualizar_usuario(request):
+    # Solo nombre de usuario y email; la contraseña se cambia en cambiar_password
+    username_anterior = request.user.username
+    form = UserSettingsForm(request.POST, instance=request.user)
+    if not form.is_valid():
+        return JsonResponse({'success': False, 'error': form.errors.get_json_data()}, status=400)
+
+    try:
+        with transaction.atomic():
+            user = form.save()
+            if user.username != username_anterior:
+                # alertas y anexos_guardados guardan el username: se reasignan para no perderlos
+                # ni dejárselos a quien se registre después con el nombre antiguo
+                db = DBManager()
+                db.openConnection()
+                try:
+                    for tabla in ("alertas", "anexos_guardados"):
+                        db.cursor.execute(
+                            f"UPDATE {tabla} SET [user] = ? WHERE [user] = ?",
+                            (user.username, username_anterior),
+                        )
+                    db.cnxn.commit()
+                finally:
+                    db.closeConnection()
+    except Exception:
+        return _error_interno("Error al actualizar el usuario")
+    return JsonResponse({'success': True})
+
+
+@login_required
+@require_POST
+def cambiar_password(request):
+    form = PasswordChangeForm(request.user, request.POST)
+    if not form.is_valid():
+        return JsonResponse({'success': False, 'error': form.errors.get_json_data()}, status=400)
+    form.save()
+    update_session_auth_hash(request, form.user)
+    return JsonResponse({'success': True})
 
 def mostrar_anexo_i(cod):
 
@@ -239,7 +299,8 @@ def mostrar_anexo_i(cod):
 
     if data == []:
         # Carga el anexo I a la base de datos
-        util_main(cod) 
+        from app.util.main import main as util_main
+        util_main(cod)
         data = db.searchTable("AnexoI", {"COD": cod})
         data1 = db.searchTable("AnexoI_fuentes", {"COD": cod})
 
@@ -358,6 +419,7 @@ def mostrar_anexo_i(cod):
 
 
 
+@login_required
 def detalles_licitacion(request, cod):
     db = DBManager()
     db.openConnection()
@@ -368,7 +430,7 @@ def detalles_licitacion(request, cod):
     # Verificar si se encontró la licitación
     if not data:
         db.closeConnection()
-        return render(request, '404.html', {})
+        raise Http404("Licitación no encontrada")
 
     documentos = db.searchTable("Documentos", {"COD": cod})
 
@@ -465,18 +527,7 @@ def detalles_licitacion(request, cod):
             "Tareas_criticas": data1[47],
         }
     else:
-        anexoI_fuentes = {k: "" for k in [
-            "COD", "Regulacion_armonizada", "Sometido_recurso_especial", "Plazo_ejecución", "Presupuesto_sinIVA",
-            "Presupuesto_conIVA", "Importe_IVA", "Sistema_Retribucion", "Valor_estimado", "Revision_precios",
-            "Garantia_definitiva", "Garantia_provisional", "Admisibilidad_variantes", "Clasificacion", "Grupo",
-            "Subgrupo", "Categoria", "Criterio_Solvencia_economica", "Criterio_Solvencia_tecnica",
-            "Condiciones_especiales", "Penalidad_incumplimiento", "Forma_pago", "Causas_modificacion",
-            "Plazo_garantia", "Contratacion_precio_unit", "Tanto_alzado", "Tanto_alzado_con", "Criterio_juicio_val",
-            "Evaluables_autom", "Criterio_ecónomico", "Obligaciones_ambientales", "Regimen_penalidades", "Ambiental",
-            "Tecnico", "Precio", "Garantia", "Experiencia", "Calidad", "Social", "Seguridad", "Juicio_valor",
-            "Formula_precio", "Formula_JuicioValor", "Criterios_valores_anormales", "Infraccion_grave",
-            "Gastos_desistimiento", "Contratacion_control", "Tareas_criticas"
-        ]}
+        anexoI_fuentes = {k: "" for k in CAMPOS_ANEXO}
 
     pliego_administrativo_url = documentos[2] if documentos else ""
     anexo_url = documentos[1] if documentos else ""
@@ -522,6 +573,7 @@ def alertas(request):
 
     return render(request, 'alertas.html', {'alertas': alertas})
 
+@login_required
 def ajustar_filtro(request, filtro_id):
     if request.method == 'POST':
         # Obtén los datos del formulario
@@ -594,18 +646,198 @@ def mis_licitaciones(request):
         'num_licitaciones': len(licitaciones),
     })
 
+@login_required
+@require_POST
 def update_database(request):
-    if request.method == 'POST':
-        try:
-            # Llama a la función `update` en scrapper.py
-            update()
-            return JsonResponse({"message": "Base de datos actualizada correctamente."}, status=200)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
-    else:
-        return JsonResponse({"error": "Método no permitido."}, status=405)
-    
+    try:
+        # Llama a la función `update` en scrapper.py
+        from app.util.scrapper import update
+        update()
+    except Exception:
+        return _error_interno("Error al actualizar las licitaciones")
+    return JsonResponse({'success': True, 'message': 'Licitaciones actualizadas correctamente.'})
 
+
+@login_required
+@require_POST
+def cargar_anexo(request):
+    cod = _json_body(request).get('cod')
+    if not cod:
+        return JsonResponse({'error': 'Código no proporcionado'}, status=400)
+
+    try:
+        db = DBManager()
+        db.openConnection()
+        try:
+            data = db.searchTable("AnexoI", {"COD": cod})
+            data1 = db.searchTable("anexoI_fuentes", {"COD": cod})
+            documentos = db.searchTable("Documentos", {"COD": cod})[6]
+
+            if data == []:
+                # Carga el anexo I a la base de datos
+                from app.util.main import main as util_main
+                util_main(cod)
+                data = db.searchTable("AnexoI", {"COD": cod})
+                data1 = db.searchTable("anexoI_fuentes", {"COD": cod})
+        finally:
+            db.closeConnection()
+
+        if not data:
+            return JsonResponse({'error': 'Licitación no encontrada'}, status=404)
+
+        anexoI = dict(zip(CAMPOS_ANEXO, data), Modificado=documentos)
+        anexoI_fuentes = dict(zip(CAMPOS_ANEXO, data1), Modificado=documentos)
+    except Exception:
+        return _error_interno("Error al cargar el anexo")
+
+    return JsonResponse({'anexoI': anexoI, 'anexoI_fuentes': anexoI_fuentes})
+
+
+@login_required
+@require_POST
+def get_anexoI_data(request):
+    cod_list = _json_body(request).get('cod_list', [])
+    if not cod_list:
+        return JsonResponse({'error': 'No se proporcionó una lista de códigos'}, status=400)
+
+    try:
+        db = DBManager()
+        db.openConnection()
+        try:
+            data = []
+            for cod in cod_list:
+                row = db.searchTable("anexoI", {"COD": cod})  # una fila (lista de columnas) o []
+                if row:
+                    column_names = [col[0] for col in db.cursor.description]
+                    data.append(dict(zip(column_names, row)))
+        finally:
+            db.closeConnection()
+    except Exception:
+        return _error_interno("Error al obtener los datos de anexoI")
+
+    if not data:
+        return JsonResponse({'error': 'No se encontraron datos para los códigos proporcionados'}, status=404)
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+@require_POST
+def crear_alerta(request):
+    nombre = request.POST.get('nombre_alerta')
+    condiciones = request.POST.get('condiciones')
+    if not nombre or not condiciones:
+        return JsonResponse({'success': False, 'error': 'Datos incompletos'}, status=400)
+
+    try:
+        condiciones_json = json.loads(condiciones)
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'Condiciones mal formateadas'}, status=400)
+
+    try:
+        db = DBManager()
+        db.openConnection()
+        try:
+            # INSERT directo: insertDb se traga los errores y la vista respondería éxito sin guardar
+            db.cursor.execute(
+                "INSERT INTO alertas ([user], nombre, activo, condiciones) VALUES (?, ?, ?, ?)",
+                (request.user.username, nombre, 1, json.dumps(condiciones_json)),
+            )
+            db.cnxn.commit()
+        finally:
+            db.closeConnection()
+    except Exception:
+        return _error_interno("Error al guardar la alerta")
+
+    return JsonResponse({
+        'success': True,
+        'nombre': nombre,
+        'activo': True,
+        'condiciones': condiciones_json,
+    })
+
+
+@login_required
+@require_POST
+def eliminar_alerta(request):
+    try:
+        alerta_id = int(request.POST.get('id', ''))
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'Datos incompletos'}, status=400)
+
+    try:
+        db = DBManager()
+        db.openConnection()
+        try:
+            # Solo borra la alerta si pertenece al usuario autenticado
+            db.cursor.execute(
+                "DELETE FROM alertas WHERE id = ? AND [user] = ?",
+                (alerta_id, request.user.username),
+            )
+            borradas = db.cursor.rowcount
+            db.cnxn.commit()
+        finally:
+            db.closeConnection()
+    except Exception:
+        return _error_interno("Error al eliminar la alerta")
+
+    if borradas == 0:
+        return JsonResponse({'success': False, 'error': 'Alerta no encontrada'}, status=404)
+    return JsonResponse({'success': True})
+
+
+@login_required
+@require_POST
+def guardar_anexo(request):
+    cod_licitacion = request.POST.get('cod_licitacion')
+    if not cod_licitacion:
+        return JsonResponse({'success': False, 'error': 'Datos incompletos'}, status=400)
+
+    try:
+        db = DBManager()
+        db.openConnection()
+        try:
+            # INSERT directo: insertDb se traga los errores y la vista respondería éxito sin guardar
+            db.cursor.execute(
+                "INSERT INTO anexos_guardados (cod_licitacion, [user]) VALUES (?, ?)",
+                (cod_licitacion, request.user.username),
+            )
+            db.cnxn.commit()
+        finally:
+            db.closeConnection()
+    except Exception:
+        return _error_interno("Error al guardar el anexo")
+    return JsonResponse({'success': True})
+
+
+@login_required
+@require_POST
+def quitar_guardada(request):
+    # Quita la licitación de "Mis licitaciones" del usuario; no toca los datos globales
+    cod_licitacion = _json_body(request).get('cod_licitacion')
+    if not cod_licitacion:
+        return JsonResponse({'success': False, 'error': 'Código de licitación no proporcionado'}, status=400)
+
+    try:
+        db = DBManager()
+        db.openConnection()
+        try:
+            db.cursor.execute(
+                "DELETE FROM anexos_guardados WHERE cod_licitacion = ? AND [user] = ?",
+                (cod_licitacion, request.user.username),
+            )
+            borradas = db.cursor.rowcount
+            db.cnxn.commit()
+        finally:
+            db.closeConnection()
+    except Exception:
+        return _error_interno("Error al quitar la licitación guardada")
+
+    if borradas == 0:
+        return JsonResponse({'success': False, 'error': 'Licitación no encontrada en tu lista'}, status=404)
+    return JsonResponse({'success': True})
+
+
+@login_required
 def estadisticas(request):
     db = DBManager()
     db.openConnection()

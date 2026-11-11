@@ -9,7 +9,7 @@ load_dotenv()
 def enviar_correo_licitacion(codigo_licitacion, destinatario, filtro):
     # Configura tus credenciales de Gmail
     remitente = os.getenv("GMAIL")
-    password = os.getenv("CONTRASEÑAGMAIL")
+    password = os.getenv("CONTRASENAGMAIL")
 
     # Crea el mensaje
     asunto = f'Información sobre la licitación {codigo_licitacion}'
@@ -31,7 +31,3 @@ def enviar_correo_licitacion(codigo_licitacion, destinatario, filtro):
     except Exception as e:
         print(f"Error al enviar el correo: {e}")
 
-
-if __name__ == "__main__":
-    # Ejemplo de uso
-    enviar_correo_licitacion('LIC12345', 'dantrox2015@gmail.com', 'Expedientes interesantes')

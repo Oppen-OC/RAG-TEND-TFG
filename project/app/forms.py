@@ -3,6 +3,15 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.db import models
 
+class UserSettingsForm(forms.ModelForm):
+    # ModelForm valida el formato del username y que no exista ya
+    email = forms.EmailField(required=True, label="Correo electrónico")
+
+    class Meta:
+        model = User
+        fields = ("username", "email")
+
+
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True, label="Correo electrónico")
 

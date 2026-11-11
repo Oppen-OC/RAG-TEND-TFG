@@ -1384,9 +1384,10 @@ document.getElementById('updateButton').addEventListener('click', async () => {
       updateButton.disabled = true;
       updateButton.textContent = 'Actualizando...';
 
-      const response = await fetch('http://127.0.0.1:5000/update-licitaciones', { // Cambia el puerto si es necesario
+      const response = await fetch("{% url 'app:update_database' %}", {
         method: 'POST',
         headers: {
+          'X-CSRFToken': CSRF_TOKEN,
           'Content-Type': 'application/json',
         },
       });
@@ -1396,7 +1397,7 @@ document.getElementById('updateButton').addEventListener('click', async () => {
         alert(result.message);
         location.reload(); // Recarga la página para mostrar los datos actualizados
       } else {
-        alert('Error: ' + result.message);
+        alert('Error: ' + (result.message || result.error));
       }
     } catch (error) {
       alert('Error al actualizar las licitaciones.');
@@ -1459,9 +1460,10 @@ document.getElementById('downloadButton').addEventListener('click', async () => 
 
   // Obtener los datos de la tabla SQL "anexoI" desde el servidor
   try {
-    const response = await fetch('http://127.0.0.1:5000/get-anexoI-data', {
+    const response = await fetch("{% url 'app:get_anexoI_data' %}", {
       method: 'POST',
       headers: {
+        'X-CSRFToken': CSRF_TOKEN,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ cod_list: codList }) // Enviar codList al servidor

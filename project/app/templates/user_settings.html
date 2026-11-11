@@ -4,63 +4,95 @@
 <h1>Opciones de Usuario</h1>
 <p>Aquí puedes configurar tus opciones de usuario.</p>
 
-<form id="userSettingsForm">
+<form id="userSettingsForm" class="mb-5">
   {% csrf_token %}
-  
+
   <!-- Nombre -->
   <div class="mb-3">
     <label for="username" class="form-label">Nombre de Usuario</label>
     <input type="text" class="form-control" id="username" name="username" value="{{ username }}" required>
   </div>
-  
+
   <!-- Correo Electrónico -->
   <div class="mb-3">
     <label for="email" class="form-label">Correo Electrónico</label>
     <input type="email" class="form-control" id="email" name="email" value="{{ email }}" required>
   </div>
-  
-  <!-- Contraseña -->
-  <div class="mb-3">
-    <label for="password" class="form-label">Contraseña</label>
-    <input type="password" class="form-control" id="password" name="password" value="{{ password }}" required>
-  </div>
-  
+
   <!-- Notificaciones -->
   <div class="mb-3 form-check">
     <input type="checkbox" class="form-check-input" id="notifications" name="notifications" {% if notifications %}checked{% endif %}>
     <label class="form-check-label" for="notifications">Recibir notificaciones por correo</label>
   </div>
-  
-  <input type="hidden" name="username_actual" value="{{ username }}">
+
   <!-- Botón Guardar -->
   <button type="submit" class="btn btn-primary">Guardar Cambios</button>
 </form>
 
-<script>
-document.getElementById('userSettingsForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const formData = new FormData(this);
+<!-- Cambio de contraseña: exige la contraseña actual -->
+<h2 class="h4">Cambiar contraseña</h2>
+<form id="passwordForm">
+  {% csrf_token %}
 
-  fetch('http://192.168.1.4:5000/actualizar-usuario', {
-    method: 'POST',
-    body: formData,
-    headers: {
-      'X-Requested-With': 'XMLHttpRequest',
-    },
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      alert('Datos actualizados correctamente.');
-      // Opcional: recargar o actualizar la página
-    } else {
-      alert('Error: ' + (data.error || 'No se pudo actualizar.'));
-    }
-  })
-  .catch(error => {
-    alert('Error de red o servidor.');
-    console.error(error);
+  <div class="mb-3">
+    <label for="old_password" class="form-label">Contraseña actual</label>
+    <input type="password" class="form-control" id="old_password" name="old_password" autocomplete="current-password" required>
+  </div>
+
+  <div class="mb-3">
+    <label for="new_password1" class="form-label">Nueva contraseña</label>
+    <input type="password" class="form-control" id="new_password1" name="new_password1" autocomplete="new-password" required>
+  </div>
+
+  <div class="mb-3">
+    <label for="new_password2" class="form-label">Repite la nueva contraseña</label>
+    <input type="password" class="form-control" id="new_password2" name="new_password2" autocomplete="new-password" required>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Cambiar contraseña</button>
+</form>
+
+<script>
+// data.error es un texto o los errores de un formulario de Django: {campo: [{message, code}]}
+function mensajeError(data) {
+  if (!data.error) return 'No se pudo actualizar.';
+  if (typeof data.error === 'string') return data.error;
+  return Object.values(data.error).flat().map(e => e.message).join('\n');
+}
+
+function enviarFormulario(form, url, onSuccess) {
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    fetch(url, {
+      method: 'POST',
+      body: new FormData(form),
+      headers: {
+        'X-CSRFToken': CSRF_TOKEN,
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        onSuccess();
+      } else {
+        alert('Error: ' + mensajeError(data));
+      }
+    })
+    .catch(error => {
+      alert('Error de red o servidor.');
+      console.error(error);
+    });
   });
+}
+
+enviarFormulario(document.getElementById('userSettingsForm'), "{% url 'app:actualizar_usuario' %}", () => {
+  alert('Datos actualizados correctamente.');
+});
+
+enviarFormulario(document.getElementById('passwordForm'), "{% url 'app:cambiar_password' %}", () => {
+  alert('Contraseña cambiada correctamente.');
+  document.getElementById('passwordForm').reset();
 });
 </script>
 {% endblock %}

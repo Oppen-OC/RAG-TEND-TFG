@@ -208,10 +208,10 @@
       const anexoContent = document.getElementById('anexoContent');
 
       // Realizar la solicitud AJAX
-      fetch('http://192.168.1.4:5000/cargar-anexo', {
+      fetch("{% url 'app:cargar_anexo' %}", {
         method: 'POST',
         headers: {
-          "Allow-Origin": "*",
+          'X-CSRFToken': CSRF_TOKEN,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ cod: cod }),
@@ -284,16 +284,14 @@
 
     document.getElementById('guardarAnexoBtn')?.addEventListener('click', function() {
       const cod = "{{ licitacion.COD }}";
-      const user = "{{ request.user.username }}";
       const formData = new FormData();
       formData.append('cod_licitacion', cod);
-      formData.append('user', user);
 
-      fetch('http://192.168.1.4:5000/guardar-anexo', {
+      fetch("{% url 'app:guardar_anexo' %}", {
           method: 'POST',
           body: formData,
           headers: {
-          'Access-Control-Allow-Origin': '*',
+          'X-CSRFToken': CSRF_TOKEN,
           'X-Requested-With': 'XMLHttpRequest',
           },
       })
