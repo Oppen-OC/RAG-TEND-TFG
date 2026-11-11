@@ -229,10 +229,11 @@ function updateHiddenColumnsVisibility() {
 function eliminarLicitacion(cod) {
   if (!confirm('¿Seguro que quieres eliminar esta licitación de tu lista?')) return;
 
-  fetch('http://192.168.1.4:5000/eliminar-licitacion', {
+  fetch("{% url 'app:quitar_guardada' %}", {
     method: 'POST',
-    body: JSON.stringify({ cod_licitacion: cod, user: '{{ request.user.username }}' }),
+    body: JSON.stringify({ cod_licitacion: cod }),
     headers: {
+      'X-CSRFToken': CSRF_TOKEN,
       'Content-Type': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
     },
