@@ -48,6 +48,7 @@ def home(request):
     return redirect('app:licitaciones')
 
 
+@login_required
 def licitaciones_view(request):
     db = DBManager()
     db.openConnection()
@@ -418,6 +419,7 @@ def mostrar_anexo_i(cod):
 
 
 
+@login_required
 def detalles_licitacion(request, cod):
     db = DBManager()
     db.openConnection()
@@ -571,6 +573,7 @@ def alertas(request):
 
     return render(request, 'alertas.html', {'alertas': alertas})
 
+@login_required
 def ajustar_filtro(request, filtro_id):
     if request.method == 'POST':
         # Obtén los datos del formulario
@@ -824,6 +827,7 @@ def quitar_guardada(request):
     return JsonResponse({'success': True})
 
 
+@login_required
 def estadisticas(request):
     db = DBManager()
     db.openConnection()
