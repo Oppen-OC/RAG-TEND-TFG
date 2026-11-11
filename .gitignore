@@ -1,4 +1,10 @@
-code\winter_olympics_2022.csv
+# Project: generated data, local vector store, scratch files
+project/app/util/testing/questions.json
+project/app/util/testing/json_files
+project/app/util/JSON/generated_old/
+project/app/util/temp_files/temp_document.*
+*.bak
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -7,13 +13,6 @@ __pycache__/
 
 # C extensions
 *.so
-
-# Ignore generated questions file
-project/app/util/testing/questions.json
-project/app/util/testing/json_files
-project/app/util/JSON/generated_old/chromadb
-project/app/util/JSON/generated_old/chromadb/*.sqlite3
-project/app/util/JSON/generated_old/chromadb/chroma.sqlite3
 
 # Distribution / packaging
 .Python
