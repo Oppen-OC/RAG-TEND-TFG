@@ -3,6 +3,7 @@ from typing import List, Tuple, Dict
 import openai
 import json
 import os
+UTIL_DIR = os.path.dirname(os.path.abspath(__file__))
 from typing import List, Dict
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
@@ -153,8 +154,8 @@ def simple_test():
 
 def main():
     # Ruta de los archivos JSON
-    generated_file_path = r"D:\WINDOWS\Escritorio\TFG\project\app\util\temp_files\CMAYOR_2021_07Y10_134.json"
-    expected_file_path = r"D:\WINDOWS\Escritorio\TFG\project\app\util\JSON\CMAYOR_2021_07Y10_134.json"
+    generated_file_path = os.path.join(UTIL_DIR, "temp_files/CMAYOR_2021_07Y10_134.json")
+    expected_file_path = os.path.join(UTIL_DIR, "JSON/CMAYOR_2021_07Y10_134.json")
 
     # Leer los archivos JSON
     with open(generated_file_path, 'r', encoding='utf-8') as f:
@@ -216,7 +217,7 @@ def main():
 
 def main2():
     # Ruta del archivo JSON
-    json_file_path = r"D:\WINDOWS\Escritorio\TFG\project\app\util\temp_files\output.json"
+    json_file_path = os.path.join(UTIL_DIR, "temp_files/output.json")
 
     # Leer el archivo JSON
     with open(json_file_path, 'r', encoding='utf-8') as f:
