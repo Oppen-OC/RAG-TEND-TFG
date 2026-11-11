@@ -142,6 +142,8 @@ Open http://localhost:8000. The scheduled job starts with the server and fills t
 DB_ENGINE=sqlite DISABLE_PERIODIC=1 python project/manage.py test app
 ```
 
+**Evaluation scripts** (Ragas, LLM judge, linear adapter) need some extra packages: `pip install -r requirements-eval.txt`.
+
 ## Limitations and future work
 
 - Scanned PDFs are not supported. The next step would be adding OCR.
