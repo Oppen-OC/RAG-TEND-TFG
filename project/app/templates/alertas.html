@@ -27,7 +27,7 @@
           {% endfor %}
         </td>
         <td>
-          <button type="button" class="btn btn-danger btn-sm" onclick="eliminarAlerta('{{ alerta.id }}', '{{ alerta.user }}')">Eliminar</button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="eliminarAlerta('{{ alerta.id }}')">Eliminar</button>
         </td>
       </tr>
     {% empty %}
@@ -42,7 +42,7 @@
 <div class="modal fade" id="modalNuevaAlerta" tabindex="-1" aria-labelledby="modalNuevaAlertaLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form id="formNuevaAlerta" method="post" action="/crear-alerta">
+      <form id="formNuevaAlerta" method="post" action="{% url 'app:crear_alerta' %}">
         {% csrf_token %}
         <div class="modal-header">
           <h5 class="modal-title" id="modalNuevaAlertaLabel">Añadir Nueva Alerta</h5>
@@ -111,7 +111,6 @@
             </div>
           </div>
           <input type="hidden" name="condiciones" id="condiciones-json-nueva">
-          <input type="hidden" name="user" value="{{ request.user.username }}">
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -182,10 +181,11 @@
       for (let pair of formData.entries()) {
       }
 
-      fetch('http://192.168.1.4:5000/crear-alerta', {
+      fetch("{% url 'app:crear_alerta' %}", {
         method: 'POST',
         body: formData,
         headers: {
+          'X-CSRFToken': CSRF_TOKEN,
           'X-Requested-With': 'XMLHttpRequest',
         },
       })
@@ -308,17 +308,17 @@
     });
   }
 
-  function eliminarAlerta(alertaId, user) {
+  function eliminarAlerta(alertaId) {
     if (!confirm('¿Seguro que quieres eliminar esta alerta?')) return;
 
     const formData = new FormData();
     formData.append('id', alertaId);
-    formData.append('user', user);
 
-    fetch('http://192.168.1.4:5000/eliminar-alerta', {
+    fetch("{% url 'app:eliminar_alerta' %}", {
       method: 'POST',
       body: formData,
       headers: {
+        'X-CSRFToken': CSRF_TOKEN,
         'X-Requested-With': 'XMLHttpRequest',
       },
     })

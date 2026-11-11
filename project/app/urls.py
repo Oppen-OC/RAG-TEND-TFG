@@ -16,4 +16,12 @@ urlpatterns = [
     path('update', views.update_database, name='update_database'),
     path('estadisticas', views.estadisticas, name='estadisticas'),
     path('register/', views.register, name='register'),
+    path('cargar-anexo/', views.cargar_anexo, name='cargar_anexo'),
+    path('get-anexoI-data/', views.get_anexoI_data, name='get_anexoI_data'),
+    path('crear-alerta/', views.crear_alerta, name='crear_alerta'),
+    path('eliminar-alerta/', views.eliminar_alerta, name='eliminar_alerta'),
+    path('guardar-anexo/', views.guardar_anexo, name='guardar_anexo'),
+    path('quitar-guardada/', views.quitar_guardada, name='quitar_guardada'),
+    path('actualizar-usuario/', views.actualizar_usuario, name='actualizar_usuario'),
+    path('cambiar-password/', views.cambiar_password, name='cambiar_password'),
 ]
