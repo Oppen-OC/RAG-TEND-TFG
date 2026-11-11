@@ -13,21 +13,32 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 
+from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Variables de entorno desde el .env de la raíz del repositorio (ver .env.example)
+load_dotenv(BASE_DIR.parent / ".env")
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-e9(*()i)%@#o=i0keu=f_xqi7w(2w=!^#$ong0i7x)s6jan%wn'
+try:
+    SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+except KeyError:
+    raise ImproperlyConfigured(
+        "Falta la variable de entorno DJANGO_SECRET_KEY. "
+        "Copia .env.example a .env y genera una clave (el comando está en .env.example)."
+    )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
-
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 # Application definition
 INSTALLED_APPS = [
@@ -78,20 +89,29 @@ WSGI_APPLICATION = 'project.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-DATABASES = {
-    'default': {
-        'ENGINE': 'mssql',
-        'NAME': 'TFG',
-        'USER': '',  # Usuario de la base de datos
-        'PASSWORD': '',  # Contraseña del usuario
-        'HOST': 'Perceptron3k',  # Nombre del servidor SQL
-        'PORT': '',  # Puerto del servidor (por defecto es 1433)
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'trusted_connection': 'yes',
-        },
+if os.getenv("DB_ENGINE") == "sqlite":
+    # Para tests y pruebas locales sin SQL Server (las tablas de DBManager no existen aquí)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'test.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'mssql',
+            'NAME': os.getenv("DB_NAME", "TFG"),
+            'USER': '',  # Usuario de la base de datos
+            'PASSWORD': '',  # Contraseña del usuario
+            'HOST': os.getenv("DB_HOST", "localhost"),  # Nombre del servidor SQL
+            'PORT': '',  # Puerto del servidor (por defecto es 1433)
+            'OPTIONS': {
+                'driver': 'ODBC Driver 17 for SQL Server',
+                'trusted_connection': 'yes',
+            },
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -131,4 +151,5 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+LOGIN_URL = '/'  # La raíz es la LoginView
 LOGIN_REDIRECT_URL = '/licitaciones/'
