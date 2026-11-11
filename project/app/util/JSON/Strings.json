@@ -2,21 +2,10 @@
     "Formulario": {
         "Pagina": "https://contrataciondelestado.es/wps/portal/licitaciones",
         "Licitaciones": "a[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:linkFormularioBusqueda\"]",
-        "FechaMin": "input[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:textMinFecLimite\"]",
-        "FechaMax": "input[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:textMaxFecLimite\"]",
-        "Tipo": "select[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:combo1MAQ\"]",
-        "Presentacion": "select[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:menuFormaPresentacionMAQ1_SistPresent\"]",
         "SiguientePag": "input[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:footerSiguiente\"]",
         "Buscar": "input[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:button1\"]",
-        "Nuts": "a[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:linkSeleccionNUTS\"]",
-        "Valencia": "select[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:listbox11MAQ\"]",
-        "NutsClose": "input[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:buttonAceptarSeleccionNUTS\"]",
-        "Pais": "select[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:menu1MAQ1\"]",
         "BusquedaAvanzada": "a[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:linkBusquedaAvanzada\"]",
-        "Organizacion": "a[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:linkSeleccionarOC\"]",
-        "Valencia_0": "a[id=\"itafelTree_maceoArbol_id_16\"]",
-        "Añadir": "a[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:botonAnadirMostrarPopUpArbolEO\"]",
-        "Seleccionar": "input[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:botonAnadirMostrarPopUpArbolEO\"]"
+        "Organizacion": "a[id=\"viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:linkSeleccionarOC\"]"
     },
 
     "Expediente": {
@@ -25,22 +14,14 @@
     },
 
     "Anexo":{
-        "Tabla": "myTablaDetalleVISUOE",
-        "ColumPlieg": "tipoDocumento  padding0punto2",
-        "ColumHtml": "documentosPub  padding0punto2"
+        "Tabla": "myTablaDetalleVISUOE"
     },
 
     "dataBase": {
         "Licitaciones": "(COD, ID_Publicacion_TED, Organo_Contratacion, ID_Organo_Contratacion, Estado_Licitacion, Objeto_Contrato, Financiacion_UE, Presupuesto_Base_Licitacion, Valor_Estimado_Contrato, Tipo_Contrato, Codigo_CPV, Lugar_Ejecucion, Sistema_Contratacion, Procedimiento_Contratacion, Tipo_Tramitacion,Metodo_Presentacion_Oferta, Resultado,Adjudicatario,Num_Licitadores_Presentados,Importe_Adjudicacion, Fecha_Adjudicacion, Fecha_Formalizacion, Fecha_Desistimiento, Fecha_Presentacion_Oferta, Fecha_Presentacion_Solicitud)",
         "LicitacionesV": "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",        
-        "Licitaciones_test": "(COD, ID_Publicacion_TED, Organo_Contratacion, ID_Organo_Contratacion, Estado_Licitacion, Objeto_Contrato, Financiacion_UE, Presupuesto_Base_Licitacion, Valor_Estimado_Contrato, Tipo_Contrato, Codigo_CPV, Lugar_Ejecucion, Sistema_Contratacion, Procedimiento_Contratacion, Tipo_Tramitacion,Metodo_Presentacion_Oferta, Resultado,Adjudicatario,Num_Licitadores_Presentados,Importe_Adjudicacion)",
-        "Licitaciones_testV": "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         "Codigos": "(COD, DIR_URL, Fechas)",
         "CodigosV": "VALUES(?, ?, ?)",        
-        "Codigos_test": "(COD, DIR_URL)",
-        "Codigos_testV": "VALUES(?, ?)",
-        "Anexos": "(COD, url_pliego, titulo_pliego, anexo_I, multiples, modificado)",
-        "AnexosV": "VALUES(?, ?, ?, ?, ?, ?)",
         "Documentos": "(COD, url_anexo, url_pliego, titulo_anexo, anexo_I, multiples, modificado)",
         "DocumentosV": "VALUES(?, ?, ?, ?, ?, ?, ?)",
         "AnexoI": "(COD,Regulacion_armonizada,Sometido_recurso_especial,Plazo_ejecución,Presupuesto_sinIVA,Presupuesto_conIVA,Importe_IVA,Sistema_Retribucion,Valor_estimado,Revision_precios,Garantia_definitiva,Garantia_provisional,Admisibilidad_variantes,Clasificacion,Grupo,Subgrupo,Categoria,Criterio_Solvencia_economica,Criterio_Solvencia_tecnica,Condiciones_especiales,Penalidad_incumplimiento,Forma_pago,Causas_modificacion,Plazo_garantia,Contratacion_precio_unit,Tanto_alzado,Tanto_alzado_con,Criterio_juicio_val,Evaluables_autom,Criterio_ecónomico,Obligaciones_ambientales,Regimen_penalidades,Ambiental,Tecnico,Precio,Garantia,Experiencia,Calidad,Social,Seguridad,Juicio_valor,Formula_precio,Formula_JuicioValor,Criterios_valores_anormales,Infraccion_grave,Gastos_desistimiento,Contratacion_control,Tareas_criticas)",        
@@ -104,51 +85,6 @@
             "gastos_desistimiento": "¿Qué menciona sobre el importe de los gastos por desistimiento o renuncia?",
             "contratacion_control": "¿Se ha contratado el control de calidad de la obra mediante un contrato independiente?",
             "tareas_criticas": "¿Podrán las tareas críticas ser objeto de subcontratación?"        
-        },         
-        
-        "Ajuntament_formato_1": {
-            "Regulacion_armonizada": "Si, No",	
-            "Sometido_recurso_especial": "Si, No",	
-            "Plazo_ejecución": "[NUMERO] meses",
-            "Presupuesto_sinIVA": "[NUMERO] €",
-            "Presupuesto_conIVA": "[NUMERO] €",
-            "Importe_IVA": "[NUMERO] €",
-            "Sistema_Retribucion": "En función de [TEXTO]",
-            "Valor_estimado": "[NUMERO] €",
-            "Revision_precios": "Si [añadir explicación], No",
-            "Garantia_definitiva": "Si [añadir explicación], No",
-            "Garantia_provisional": "Si [añadir explicación], No",
-            "Admisibilidad_variantes": "Si [añadir explicación], No",
-            "Clasificacion": "Si, No",
-            "Grupo":"Grupo [LETRA]",
-            "Subgrupo":"Subgrupo [NUMERO] [CARACTERISTICAS]",
-            "Categoria":"Categoría [NUMERO] [CARACTERISTICAS]",
-            "Criterio_Solvencia_economica": "Si, no",
-            "Criterio_Solvencia_tecnica": "Si, no",
-            "Condiciones_especiales": "Si [añadir explicación], No",
-            "Penalidad_incumplimiento": "Si [añadir explicación], No, No procede",
-            "Forma_pago": "[TIPO]",
-            "Causas_modificacion": "Si [añadir explicación], No",
-            "Plazo_garantia":  "[NUMERO] meses|años",
-            "Contratacion_precio_unit": "Si [añadir explicación], No",
-            "Tanto_alzado": "Si [añadir explicación], No",
-            "Tanto_alzado_con": "Si [añadir explicación], No",
-            "Criterio_juicio_val": "[NUMERO]",
-            "Evaluables_autom": "[NUMERO]",
-            "Criterio_ecónomico": "[NUMERO]",
-            "Obligaciones_ambientales": "Si [añadir explicación], No",
-            "Regimen_penalidades": "[LISTADO]",
-            "Ambiental": "[LISTADO]",
-            "Tecnico": "[LISTADO]",
-            "Precio": "[LISTADO]",
-            "Garantia": "[LISTADO]",
-            "Experiencia": "[LISTADO]",
-            "Calidad": "[LISTADO]",
-            "Social": "[LISTADO]",
-            "Seguridad": "[LISTADO]",
-            "Juicio_valor": "[LISTADO]",
-            "Formula_precio": "[FORMULA]",
-            "Formula_JuicioValor": "[FORMULA]"
         },         
         
         "Ajuntament_formato": {
