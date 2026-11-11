@@ -89,20 +89,29 @@ WSGI_APPLICATION = 'project.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-DATABASES = {
-    'default': {
-        'ENGINE': 'mssql',
-        'NAME': os.getenv("DB_NAME", "TFG"),
-        'USER': '',  # Usuario de la base de datos
-        'PASSWORD': '',  # Contraseña del usuario
-        'HOST': os.getenv("DB_HOST", "localhost"),  # Nombre del servidor SQL
-        'PORT': '',  # Puerto del servidor (por defecto es 1433)
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'trusted_connection': 'yes',
-        },
+if os.getenv("DB_ENGINE") == "sqlite":
+    # Para tests y pruebas locales sin SQL Server (las tablas de DBManager no existen aquí)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'test.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'mssql',
+            'NAME': os.getenv("DB_NAME", "TFG"),
+            'USER': '',  # Usuario de la base de datos
+            'PASSWORD': '',  # Contraseña del usuario
+            'HOST': os.getenv("DB_HOST", "localhost"),  # Nombre del servidor SQL
+            'PORT': '',  # Puerto del servidor (por defecto es 1433)
+            'OPTIONS': {
+                'driver': 'ODBC Driver 17 for SQL Server',
+                'trusted_connection': 'yes',
+            },
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
