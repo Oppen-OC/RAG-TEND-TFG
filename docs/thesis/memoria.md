@@ -2468,7 +2468,7 @@ Con estos pasos tendrás SSMS instalado y listo para gestionar tus bases de dato
 
 ### Recreación de la base de datos
 
-El script que describe toda la estructura de la base de datos se encuentra ubicado en el directorio de github bajo el nombre de `dataBaseScript.txt`, al igual que el archivo .bak, para recrearla sigue los siguientes pasos:
+El script que describe toda la estructura de la base de datos se encuentra en el repositorio, en `database/schema.sql`. Para recrearla sigue los siguientes pasos:
 
 1.  **Abrir SQL Server Management Studio (SSMS):** Inicia SSMS y conéctate a tu instancia de SQL Server.
 
@@ -2476,19 +2476,9 @@ El script que describe toda la estructura de la base de datos se encuentra ubica
 
     1.  Abre una nueva query desde una instancia distinta a la que se quiere modificar.
 
-    2.  Copia y pega el script para luego ejecutarlo (`F5`)
+    2.  Copia y pega el contenido de `database/schema.sql` para luego ejecutarlo (`F5`).
 
-3.  **Restaurar desde un archivo `.bak`:**
-
-    1.  Haz clic derecho en **Bases de datos** y selecciona **Restaurar base de datos**.
-
-    2.  Elige la opción **Dispositivo** y selecciona el archivo `.bak` desde tu directorio local.
-
-    3.  Configura el nombre de la base de datos y las rutas de los archivos si es necesario.
-
-    4.  Haz clic en **Aceptar** para iniciar la restauración.
-
-Con estos pasos, podrás restaurar o recrear tu base de datos utilizando tanto el archivo de respaldo como el script original.
+Con estos pasos tendrás la base de datos creada con toda su estructura, sin datos. El script ya crea las tablas de Django, así que basta con marcar sus migraciones como aplicadas con `python project/manage.py migrate --fake`.
 
 ### Ajuste del archivo .venv
 
