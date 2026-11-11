@@ -1,4 +1,5 @@
 import os
+UTIL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 import json
 import sys
 import openai
@@ -259,11 +260,11 @@ if __name__ == "__main__":
     generate_questions_from_chunks(corpus_path, questions_path)  # Generar preguntas
     """
     train_files = [
-        r"D:\WINDOWS\Escritorio\TFG\project\app\util\testing\json_files\CMAYOR_2022_03Y03_8 _val.json",
-        r"D:\WINDOWS\Escritorio\TFG\project\app\util\testing\json_files\CMAYOR_2022_03Y03_101_val.json",
-        r"D:\WINDOWS\Escritorio\TFG\project\app\util\testing\json_files\CMAYOR_2022_07Y10_44_val.json",
-        r"D:\WINDOWS\Escritorio\TFG\project\app\util\testing\json_files\CMAYOR_2023_03Y05_19_val.json",
-        r"D:\WINDOWS\Escritorio\TFG\project\app\util\testing\json_files\CMAYOR_2023_07Y10_1_val.json"
+        os.path.join(UTIL_DIR, "testing/json_files/CMAYOR_2022_03Y03_8 _val.json"),
+        os.path.join(UTIL_DIR, "testing/json_files/CMAYOR_2022_03Y03_101_val.json"),
+        os.path.join(UTIL_DIR, "testing/json_files/CMAYOR_2022_07Y10_44_val.json"),
+        os.path.join(UTIL_DIR, "testing/json_files/CMAYOR_2023_03Y05_19_val.json"),
+        os.path.join(UTIL_DIR, "testing/json_files/CMAYOR_2023_07Y10_1_val.json")
     ]
 
     merge_json_files(train_files, corpus_path)
