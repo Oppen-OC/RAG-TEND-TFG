@@ -5,6 +5,7 @@ from ragas.metrics import AspectCritic
 from ragas.llms import LangchainLLMWrapper
 from langchain_openai import ChatOpenAI
 import os
+UTIL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 from dotenv import load_dotenv
 import asyncio
 
@@ -24,7 +25,7 @@ chat_client = ChatOpenAI(
 evaluator_llm = LangchainLLMWrapper(chat_client)
 
 # Ruta del archivo JSON
-file_path = r"D:\WINDOWS\Escritorio\TFG\project\app\util\temp_files\output.json"
+file_path = os.path.join(UTIL_DIR, "temp_files/output.json")
 
 # Cargar los datos desde el archivo JSON
 with open(file_path, 'r', encoding='utf-8') as file:
