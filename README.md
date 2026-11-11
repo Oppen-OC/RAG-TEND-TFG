@@ -117,18 +117,23 @@ The full schema is in [`database/schema.sql`](database/schema.sql). The core tab
 
 ## Running it locally
 
+**Platform: Windows only.** The app connects to SQL Server with Windows integrated authentication (`Trusted_Connection=yes`), so there are no database username or password settings. The commands below are for PowerShell.
+
 **Prerequisites:** Python 3.13, SQL Server with [ODBC Driver 17](https://learn.microsoft.com/sql/connect/odbc/download-odbc-driver-for-sql-server), and an API key for an OpenAI-compatible LLM endpoint. The project used UPV's PoliGPT; to use another endpoint, change `base_url` and the model names in `project/app/util/rag_operations.py`.
 
-```bash
-git clone https://github.com/Oppen-OC/RAG-TEND-TFG.git && cd RAG-TEND-TFG
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+```powershell
+git clone https://github.com/Oppen-OC/RAG-TEND-TFG.git
+cd RAG-TEND-TFG
+python -m venv .venv
+.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 playwright install chromium
 python -m spacy download es_core_news_md
 python -m spacy download es_core_news_lg
 
-cp .env.example .env                               # then fill in the values
+Copy-Item .env.example .env                        # then fill in the values
 # Create the database: run database/schema.sql in SQL Server (SSMS or sqlcmd)
+python project/manage.py migrate --fake            # schema.sql already creates Django's tables
 
 python project/manage.py createsuperuser
 python project/manage.py runserver
@@ -136,10 +141,11 @@ python project/manage.py runserver
 
 Open http://localhost:8000 and click **Actualizar Licitaciones** to run the scraper. Opening a tender's details triggers the LLM extraction of its annex the first time (about 10-15 minutes).
 
-**Tests** (no SQL Server needed):
+**Tests** (no SQL Server or `.env` needed):
 
-```bash
-DB_ENGINE=sqlite DISABLE_PERIODIC=1 python project/manage.py test app
+```powershell
+$env:DJANGO_SECRET_KEY = "test"; $env:DB_ENGINE = "sqlite"; $env:DISABLE_PERIODIC = "1"
+python project/manage.py test app
 ```
 
 **Evaluation scripts** (Ragas, LLM judge, linear adapter) need some extra packages: `pip install -r requirements-eval.txt`.
