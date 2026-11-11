@@ -120,7 +120,7 @@ The full schema is in [`database/schema.sql`](database/schema.sql). The core tab
 **Prerequisites:** Python 3.13, SQL Server with [ODBC Driver 17](https://learn.microsoft.com/sql/connect/odbc/download-odbc-driver-for-sql-server), and an API key for an OpenAI-compatible LLM endpoint. The project used UPV's PoliGPT; to use another endpoint, change `base_url` and the model names in `project/app/util/rag_operations.py`.
 
 ```bash
-git clone https://github.com/Oppen-OC/TFG.git && cd TFG
+git clone https://github.com/Oppen-OC/RAG-TEND-TFG.git && cd RAG-TEND-TFG
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 playwright install chromium
