@@ -128,7 +128,6 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 playwright install chromium
-python -m spacy download es_core_news_md
 python -m spacy download es_core_news_lg
 
 Copy-Item .env.example .env                        # then fill in the values

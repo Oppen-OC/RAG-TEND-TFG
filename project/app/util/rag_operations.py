@@ -1,15 +1,12 @@
-from sentence_transformers import SentenceTransformer
 from rank_bm25 import BM25Okapi
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from typing import List
 from tqdm import tqdm
-from torch import nn
 import traceback
 import chromadb
 import logging
 import openai
-import torch
 import spacy
 import json
 import time
@@ -33,14 +30,6 @@ class Prompt(BaseModel):
 # 
 class RAGResult(BaseModel):
     prompts: List[Prompt]
-
-class LinearAdapter(nn.Module):
-    def __init__(self, input_dim):
-        super().__init__()
-        self.linear = nn.Linear(input_dim, input_dim)
-    
-    def forward(self, x):
-        return self.linear(x)
 
 class RAG:
     # Configuración del logger específico para el RAG y archivos temporales
@@ -77,7 +66,6 @@ class RAG:
         # Cliente de OpenAI
         client = openai.OpenAI(api_key=api_key, base_url=base_url)
         strings = RAG.strings
-        spacy.load('es_core_news_md')
         
         self.prompts = strings["Prompts"]["Ajuntament"]  
         self.semantics = strings["Prompts"]["Semantic"] 
@@ -385,19 +373,6 @@ class RAG:
         indices = [i for i, s in re_ranked]
         return indices, scores
 
-    def encode_query_custom(self, query):
-        loaded_dict = torch.load(os.path.join(UTIL_DIR, "testing/models/model_E30_B64_L2e-05.pth")
-            ,map_location=torch.device('cpu')
-        )
-        base_model = SentenceTransformer('all-MiniLM-L6-v2') 
-        adapter = LinearAdapter(base_model.get_sentence_embedding_dimension())  # Initialize with appropriate parameters
-        adapter.load_state_dict(loaded_dict['adapter_state_dict'])   
-
-        device = next(adapter.parameters()).device
-        query_emb = base_model.encode(query, convert_to_tensor=True).to(device)
-        adapted_query_emb = adapter(query_emb)
-        return adapted_query_emb.cpu().detach().numpy()
-
     def retrieve_similar_chunks(self, query, top_k):
         # Generar el embedding para la consulta usando la API de OpenAI
         try:
@@ -406,8 +381,6 @@ class RAG:
                 model=self.embedding_model,  # Modelo especificado en la inicialización
             )
             query_embedding = response.data[0].embedding  # Chroma espera una lista de floats
-            
-            # query_embedding = self.encode_query_custom(query)
         except Exception as e:
             self.logger.error(f"Error generating query embedding: {e}")
             return [], 0, []
@@ -482,68 +455,6 @@ class RAG:
         return answer
     
     
-    def reformulate_query(self, prompt):
-        try:
-            # Reformula el prompt usando la API de OpenAI
-            response = self.client.chat.completions.create(
-                model=self.llm_model,
-            messages=[
-                {
-                    "role": "system", 
-                    "content": f"""
-                    Eres un asistente IA que ayuda a reformular prompts para mejorar su calidad.
-                    Tu tarea es reformular el siguiente prompt para incluir las palabras clave relevantes y mejorar su claridad.
-                    Deberás responder ÚNICAMENTE con el nuevo prompt reformulado, sin añadir ningún texto adicional.
-                    Al reformular el prompt en base a las palabras clave, se generalista, no es necesario añadir exactanente cada palabra ni explicaciones extensas, intenta extraer una idea general de ellas.
-                    """
-                },                
-                {
-                    "role": "user", 
-                    "content": f"""
-                    Reformula el siguiente prompt: {prompt},
-                    Reformulalo en base a las siguientes palabras clave: {self.semantics[self.keywords[self.key]]}
-                    """
-                }
-                ],
-            )
-            new_prompt = response.choices[0].message.content.strip()
-            return new_prompt
-        except Exception as e:
-            self.logger.error(f"Error reformulating query: {e}")
-            return prompt  # Devuelve el prompt original si ocurre un error
-
-    def embed_json1(self):
-        try:
-            # Procesar cada chunk de forma secuencial
-            for i, chunk in enumerate(tqdm(self.chunks, desc="Embedding Chunks", unit="chunk")):
-                try:
-                    normalized_chunk = self.normalize_chunk(chunk)
-                    response = self.client.embeddings.create(
-                        input=normalized_chunk,
-                        model=self.embedding_model
-                    )
-                    embedding = response.data[0].embedding
-
-                    # Log the embedding creation
-                    self.logger.info(f"Created embedding for chunk {i}: {normalized_chunk}")
-
-                    # Agregar el embedding a la colección
-                    self.collection.add(
-                        documents=[normalized_chunk],
-                        embeddings=[embedding],
-                        ids=[f"chunk_{i}"],
-                        metadatas=[{
-                            "page": self.metadata[i][0],
-                            "sections": ", ".join(self.metadata[i][1])  # convierte ['None', 'A'] en 'None, A'
-                        }]
-                    )
-                except Exception as e:
-                    self.logger.error(f"Error generating embedding for chunk {i}: {e}")
-
-        except Exception as e:
-            self.logger.error(f"Error embedding JSON file with ChromaDB: {e}")
-
-
     def embed_json(self, batch_size=16):
         try:
             num_chunks = len(self.chunks)
@@ -709,7 +620,7 @@ class RAG:
         return fuentes
 
 def process_prompt(rag_object, prompt_key, prompt):
-    new_prompt = rag_object.reformulate_query(prompt)
+    new_prompt = prompt
     rag_object.key = prompt_key
     final_chunks, score, index = rag_object.union_top_chunks(new_prompt)
     response =  rag_object.generate_response_with_context(new_prompt, final_chunks)
