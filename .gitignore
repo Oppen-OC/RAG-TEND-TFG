@@ -78,6 +78,7 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+test.sqlite3
 
 # Flask stuff:
 instance/
@@ -189,4 +190,6 @@ cython_debug/
 .ruff_cache/
 
 # PyPI configuration file
-.pypirc".env" 
+.pypirc
+.env
+
