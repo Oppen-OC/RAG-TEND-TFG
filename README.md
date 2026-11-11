@@ -25,7 +25,7 @@ RAG-TEND automates the full path from source documents to analytics:
 2. **Parses and chunks** heterogeneous documents into section-aware JSON.
 3. **Indexes** the chunks as embeddings in ChromaDB.
 4. **Extracts 47 structured fields** per tender with a retrieval-augmented LLM, keeping a source reference for every extracted value.
-5. **Loads** the results into SQL Server and serves them through a Django dashboard with filters, statistics, Excel export and per-user email alerts.
+5. **Loads** the results into SQL Server and serves them through a Django dashboard with filters, statistics, Excel export and per-user alert rules.
 
 ## Architecture
 
@@ -35,7 +35,7 @@ flowchart LR
         A[contrataciondelestado.es] -->|Playwright scraper| B[(SQL Server<br/>Licitaciones / Documentos)]
     end
     subgraph Transformation
-        B --> C[Document parser<br/>pdfplumber · python-docx · odfpy]
+        B --> C[PDF parser<br/>pdfplumber]
         C --> D[Section-aware recursive chunking<br/>800 chars · 400 overlap]
         D --> E[Embeddings<br/>nomic-embed-text]
         E --> F[(ChromaDB)]
@@ -48,19 +48,19 @@ flowchart LR
     end
     subgraph Serving
         J --> K[Django dashboard<br/>filters · stats · Excel export]
-        J --> L[Scheduled job<br/>email alerts]
+        J --> L[Per-user<br/>alert rules]
     end
 ```
 
 | Stage | What happens | Key tools |
 |-------|--------------|-----------|
 | Ingestion | Navigates the platform, filters by region, stores tender metadata and document URLs. Retries on timeouts. | Playwright (async), pyodbc |
-| Parsing | Downloads each annex and normalises PDF/DOCX/ODT to text. Detects document sections and keeps tables readable. | pdfplumber, python-docx, odfpy |
+| Parsing | Downloads each annex and extracts PDF text page by page, detecting document sections and keeping tables readable. DOCX and ODT are extracted as plain text but are not chunked yet. | pdfplumber (python-docx, odfpy) |
 | Chunking | Splits each detected section recursively (800 chars, 400 overlap) and carries the section context into its chunks. | LangChain text splitters |
 | Indexing | Embeds every chunk into a cosine-distance collection, rebuilt for each document. | nomic-embed-text, ChromaDB |
 | Retrieval | Semantic search plus keyword matching (per-field keyword lists in `Strings.json`), re-ranked with BM25. | rank-bm25, spaCy (lemmatisation) |
 | Extraction | One prompt per field. Each answer is captured as a typed record together with the chunks it came from (traceability). | OpenAI-compatible API, Pydantic |
-| Serving | Dashboard, statistics, saved tenders and alert rules that email users when a new tender matches. | Django, SMTP |
+| Serving | Dashboard, statistics, Excel export, saved tenders and per-user alert rules. | Django |
 
 ## Results
 
@@ -74,7 +74,7 @@ Evaluated on a **random sample of 30 tenders** with [Ragas](https://docs.ragas.i
 
 - About **70% of all scores are ≥ 0.75**. Weak spots are concentrated in fields that rarely appear in the documents, or that depend on keyword lists (environmental and social criteria, pricing formulas). The thesis analyses each one.
 - **Embedding fine-tuning experiment:** I trained a linear adapter on top of `all-MiniLM-L6-v2` with a synthetic question corpus. It raised Hit Rate@10 to **66.7% (+7.8%)** and MRR by **+6.2%**, but it made query encoding **about 3x slower**. That trade-off is documented in the thesis.
-- **Throughput:** one annex produces 190-250 chunks and takes about 10-15 minutes end to end (embeddings plus 47 prompts). That is why tenders are pre-processed on ingestion rather than on demand.
+- **Throughput:** one annex produces 190-250 chunks and takes about 10-15 minutes end to end (embeddings plus 47 prompts). That is why the thesis design pre-processes tenders on ingestion. In the current code, extraction runs the first time a tender is opened.
 
 ## Data model
 
@@ -86,7 +86,7 @@ The full schema is in [`database/schema.sql`](database/schema.sql). The core tab
 | `Documentos` | one row per tender | URLs of the attached documents |
 | `AnexoI` | one row per tender | The 47 LLM-extracted fields |
 | `AnexoI_Fuentes` | one row per tender | Source chunks behind each extracted field (auditability) |
-| `alertas` | one row per alert rule | User-defined filters (JSON) for email notifications |
+| `alertas` | one row per alert rule | User-defined tender filters (JSON) |
 | `anexos_guardados` | one row per saved tender | Tenders each user saved |
 
 ## Screenshots
@@ -108,7 +108,7 @@ The full schema is in [`database/schema.sql`](database/schema.sql). The core tab
 │   │   │   ├── testing/     Evaluation: Ragas, LLM judge, linear adapter, corpus generator
 │   │   │   └── results/     Evaluation outputs
 │   │   ├── templates/       Dashboard views
-│   │   ├── periodic.py      Scheduled scraping, extraction and alerts
+│   │   ├── periodic.py      Scheduled scraping and email alerts (currently disabled)
 │   │   └── views.py
 │   └── manage.py
 ├── database/schema.sql      SQL Server schema
@@ -134,7 +134,7 @@ python project/manage.py createsuperuser
 python project/manage.py runserver
 ```
 
-Open http://localhost:8000. The scheduled job starts with the server and fills the database.
+Open http://localhost:8000 and click **Actualizar Licitaciones** to run the scraper. Opening a tender's details triggers the LLM extraction of its annex the first time (about 10-15 minutes).
 
 **Tests** (no SQL Server needed):
 
@@ -146,6 +146,8 @@ DB_ENGINE=sqlite DISABLE_PERIODIC=1 python project/manage.py test app
 
 ## Limitations and future work
 
+- Only PDF annexes go through the full RAG pipeline. DOCX and ODT are extracted as text but not chunked yet.
+- The scheduled ingestion and email-alert job (`project/app/periodic.py`) is disabled. Scraping is triggered from the dashboard, and alert rules are stored but not emailed yet.
 - Scanned PDFs are not supported. The next step would be adding OCR.
 - Some fields depend on handcrafted keyword lists, which do not generalise well across contracting bodies.
 - Processing time per document is driven by remote embedding and LLM latency.
