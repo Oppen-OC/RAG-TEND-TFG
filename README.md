@@ -103,7 +103,7 @@ The full schema is in [`database/schema.sql`](database/schema.sql). The core tab
 .
 ├── project/                 Django project
 │   ├── app/
-│   │   ├── util/            Pipeline: scraper, document handler, RAG, DB manager, mailer
+│   │   ├── util/            Pipeline: scraper, document handler, RAG, DB manager
 │   │   │   ├── JSON/        Prompts, field keywords and ground-truth annotations
 │   │   │   ├── testing/     Evaluation: Ragas, LLM judge, linear adapter, corpus generator
 │   │   │   └── results/     Evaluation outputs
