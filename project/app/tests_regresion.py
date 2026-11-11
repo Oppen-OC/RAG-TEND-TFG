@@ -126,3 +126,9 @@ class FrontendLimpioTests(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, 'id="formNuevaAlerta"')
         self.assertNotContains(r, "ajax-form")
+
+
+class SinJobPeriodicoTests(TestCase):
+    def test_no_hay_job_periodico(self):
+        import importlib.util
+        self.assertIsNone(importlib.util.find_spec("app.periodic"))
