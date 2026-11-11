@@ -103,12 +103,11 @@ The full schema is in [`database/schema.sql`](database/schema.sql). The core tab
 .
 ├── project/                 Django project
 │   ├── app/
-│   │   ├── util/            Pipeline: scraper, document handler, RAG, DB manager, mailer
+│   │   ├── util/            Pipeline: scraper, document handler, RAG, DB manager
 │   │   │   ├── JSON/        Prompts, field keywords and ground-truth annotations
 │   │   │   ├── testing/     Evaluation: Ragas, LLM judge, linear adapter, corpus generator
 │   │   │   └── results/     Evaluation outputs
 │   │   ├── templates/       Dashboard views
-│   │   ├── periodic.py      Scheduled scraping and email alerts (currently disabled)
 │   │   └── views.py
 │   └── manage.py
 ├── database/schema.sql      SQL Server schema
@@ -128,7 +127,6 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 playwright install chromium
-python -m spacy download es_core_news_md
 python -m spacy download es_core_news_lg
 
 Copy-Item .env.example .env                        # then fill in the values
@@ -144,7 +142,7 @@ Open http://localhost:8000 and click **Actualizar Licitaciones** to run the scra
 **Tests** (no SQL Server or `.env` needed):
 
 ```powershell
-$env:DJANGO_SECRET_KEY = "test"; $env:DB_ENGINE = "sqlite"; $env:DISABLE_PERIODIC = "1"
+$env:DJANGO_SECRET_KEY = "test"; $env:DB_ENGINE = "sqlite"
 python project/manage.py test app
 ```
 
@@ -153,7 +151,7 @@ python project/manage.py test app
 ## Limitations and future work
 
 - Only PDF annexes go through the full RAG pipeline. DOCX and ODT are extracted as text but not chunked yet.
-- The scheduled ingestion and email-alert job (`project/app/periodic.py`) is disabled. Scraping is triggered from the dashboard, and alert rules are stored but not emailed yet.
+- There is no scheduled ingestion or email notification yet: scraping is triggered from the dashboard, and alert rules are stored for a future notifier.
 - Scanned PDFs are not supported. The next step would be adding OCR.
 - Some fields depend on handcrafted keyword lists, which do not generalise well across contracting bodies.
 - Processing time per document is driven by remote embedding and LLM latency.

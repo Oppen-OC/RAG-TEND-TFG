@@ -1235,8 +1235,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-const columnFilters = []; // Array para almacenar los valores de los filtros aplicados
-
 function filterTable() {
   const table = document.getElementById('licitacionesTable');
   const rows = table.querySelectorAll('tbody tr');
@@ -1554,56 +1552,6 @@ document.getElementById('deselectAllColumns').addEventListener('click', () => {
 });
 
 
-function applyFilter(columnIndex) {
-  const input = document.querySelector(`.filter-input[data-column="${columnIndex}"]`);
-  const filterValue = input.value.trim();
-
-  // Actualizar el filtro en el array
-  columnFilters[columnIndex] = filterValue;
-
-  // Aplicar los filtros acumulativos
-  applyAllFilters();
-}
-
-function applyAllFilters() {
-  const table = document.getElementById('licitacionesTable');
-  const rows = table.querySelectorAll('tbody tr');
-
-  rows.forEach(row => {
-    let isVisible = true;
-
-    columnFilters.forEach((value, index) => {
-      const cell = row.cells[index];
-      if (cell) {
-        const cellText = cell.textContent.trim();
-
-        if (typeof value === 'string' && value) {
-          // Filtro por texto (expresión regular)
-          try {
-            const regex = new RegExp(value, 'i'); // 'i' para ignorar mayúsculas/minúsculas
-            if (!regex.test(cellText)) {
-              isVisible = false;
-            }
-          } catch (error) {
-            console.error(`Error en la expresión regular: ${value}`, error);
-            isVisible = false;
-          }
-        } else if (value && value.startDate && value.endDate) {
-          // Filtro por rango de fechas
-          const cellDate = new Date(cellText);
-          if (isNaN(cellDate.getTime()) || cellDate < value.startDate || cellDate > value.endDate) {
-            isVisible = false;
-          }
-        }
-      }
-    });
-
-    row.style.display = isVisible ? '' : 'none'; // Mostrar u ocultar la fila
-  });
-
-  updateTotalLicitaciones(); // Actualizar el contador de licitaciones visibles
-}
-
 document.addEventListener('DOMContentLoaded', () => {
 
 
@@ -1661,61 +1609,6 @@ function toggleFilterMenu(event, columnIndex) {
   menu.style.left = `${rect.left + window.scrollX}px`;
 }
 
-function clearFilter(columnIndex) {
-  const input = document.querySelector(`.filter-input[data-column="${columnIndex}"]`);
-  input.value = '';
-
-  // Eliminar el filtro de la columna en el array
-  columnFilters[columnIndex] = '';
-
-  // Aplicar los filtros acumulativos
-  const table = document.getElementById('licitacionesTable');
-  const rows = table.querySelectorAll('tbody tr');
-
-  rows.forEach(row => {
-    let isVisible = true;
-
-    columnFilters.forEach((value, index) => {
-      if (value) {
-        const cell = row.cells[index];
-        if (cell) {
-          const cellText = cell.textContent.trim();
-
-          try {
-            // Crear una expresión regular basada en el valor del filtro
-            const regex = new RegExp(value, 'i'); // 'i' para ignorar mayúsculas/minúsculas
-            isVisible = regex.test(cellText);
-          } catch (error) {
-            console.error(`Error en la expresión regular: ${value}`, error);
-            isVisible = false;
-          }
-        } else {
-          isVisible = false;
-        }
-      }
-    });
-
-    row.style.display = isVisible ? '' : 'none'; // Mostrar u ocultar la fila
-  });
-
-  updateTotalLicitaciones(); // Actualizar el contador de licitaciones visibles
-}
-
-function updateVisibility() {
-  const table = document.getElementById('licitacionesTable');
-  const rows = table.querySelectorAll('tbody tr');
-
-  rows.forEach(row => {
-    const isVisible = Array.from(row.cells).every(cell => {
-      return row.dataset.visible !== 'false';
-    });
-
-    row.style.display = isVisible ? '' : 'none'; // Muestra u oculta la fila
-  });
-
-  updateTotalLicitaciones(); // Actualizar el contador de licitaciones visibles
-}
-
 function updateTotalLicitaciones() {
   const rows = document.querySelectorAll('#licitacionesTable tbody tr');
   let visibleCount = 0;
@@ -1755,53 +1648,7 @@ function updateTotalLicitaciones() {
   }
 }
 
-function applyDateFilter(columnIndex) {
-  let startDateInput = null;
-  let endDateInput = null;
-
-  // Asignar valores solo si columnIndex es 21
-  if (columnIndex === 21) {
-    startDateInput = document.getElementById('fechaInicioAdjudicacion').value;
-    endDateInput = document.getElementById('fechaFinAdjudicacion').value;
-  } else if (columnIndex === 22) {
-    startDateInput = document.getElementById('fechaInicioFormalizacion').value;
-    endDateInput = document.getElementById('fechaFinFormalizacion').value;
-  } else if (columnIndex === 23) {
-    startDateInput = document.getElementById('fechaInicioDesistimiento').value;
-    endDateInput = document.getElementById('fechaFinDesistimiento').value;
-  } else if (columnIndex === 24) {
-    startDateInput = document.getElementById('fechaInicioPresentacionOferta').value;
-    endDateInput = document.getElementById('fechaFinPresentacionOferta').value;
-  } else if (columnIndex === 25) {
-    startDateInput = document.getElementById('fechaInicioPresentacionSolicitud').value;
-    endDateInput = document.getElementById('fechaFinPresentacionSolicitud').value;
-  }
-  
-  const startDate = startDateInput ? new Date(startDateInput) : null;
-  const endDate = endDateInput ? new Date(endDateInput) : null;
-
-  // Actualizar el filtro de fechas en el array
-  columnFilters[columnIndex] = { startDate, endDate };
-
-  // Aplicar los filtros acumulativos
-  applyAllFilters();
-}
-
-function clearDateFilter(columnIndex) {
-  document.getElementById('fechaInicioAdjudicacion').value = '';
-  document.getElementById('fechaFinAdjudicacion').value = '';
-
-  // Eliminar el filtro de fechas en el array
-  columnFilters[columnIndex] = '';
-
-  // Aplicar los filtros acumulativos
-  applyAllFilters();
-}
-
 function clearAllFilters() {
-  // Limpiar todos los filtros en el array
-  columnFilters.length = 0;
-
   // Limpiar los campos de entrada de texto
   const textFilters = document.querySelectorAll('.filter-input');
   textFilters.forEach(filter => {

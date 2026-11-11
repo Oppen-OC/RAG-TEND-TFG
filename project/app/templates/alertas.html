@@ -123,48 +123,6 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const forms = document.querySelectorAll('.ajax-form');
-
-    forms.forEach(form => {
-      form.addEventListener('submit', function (e) {
-        e.preventDefault(); // Evita el envío normal del formulario
-
-        const formData = new FormData(this);
-        const alertaId = this.getAttribute('data-id');
-        const url = "{% url 'app:ajustar_filtro' filtro_id=0 %}".replace('0', alertaId);
-
-        fetch(url, {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-        })
-          .then(response => {
-            if (response.ok) {
-              return response.json();
-            }
-            throw new Error('Error al guardar los cambios.');
-          })
-          .then(data => {
-            // Actualiza la tabla con los nuevos datos
-            const row = document.querySelector(`#modalAjustar${alertaId}`).closest('tr');
-            row.querySelector('td:nth-child(1)').textContent = data.nombre;
-            row.querySelector('td:nth-child(3)').textContent = data.frecuencia;
-            row.querySelector('td:nth-child(2) .badge').textContent = data.activo ? 'Sí' : 'No';
-            row.querySelector('td:nth-child(2) .badge').className = data.activo ? 'badge bg-success' : 'badge bg-danger';
-
-            // Cierra el modal
-            const modal = bootstrap.Modal.getInstance(document.querySelector(`#modalAjustar${alertaId}`));
-            modal.hide();
-          })
-          .catch(error => {
-            console.error(error);
-            alert('Hubo un error al guardar los cambios.');
-          });
-      });
-    });
-
     // Manejo del formulario para añadir nueva alerta
     const formNuevaAlerta = document.querySelector('#formNuevaAlerta');
     formNuevaAlerta.addEventListener('submit', function (e) {

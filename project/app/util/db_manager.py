@@ -1,7 +1,6 @@
 import pyodbc
 import json
 import logging
-import csv
 import os
 from dotenv import load_dotenv
 
@@ -61,10 +60,6 @@ class DBManager:
     def ensure_connection(self):
         if self.cnxn is None or self.cursor is None:
             self.openConnection()
-
-    def reset_cursor(self):
-        self.cursor.close()
-        self.cursor = self.cnxn.cursor()
 
     def closeConnection(self):
         self.cursor.close()
@@ -158,22 +153,7 @@ class DBManager:
         except Exception as e:
             self.logger.warning(f"No se encontraron resultados en la tabla {table} para los criterios: {search_criteria}")
             return []
-    """
-    def searchAllTable(self, table, search_criteria) -> list:
-        where_clause = " AND ".join([f"{col} = ?" for col in search_criteria.keys()])
-        sql = f"SELECT * FROM {table} WHERE {where_clause}"
-        try:
-            self.cursor.execute(sql, tuple(search_criteria.values()))
-            rows = self.cursor.fetchall()
-            self.logger.info(f"Resultados de la búsqueda en la tabla {table}: {rows}")
-            return [list(row) for row in rows]
-        except pyodbc.Error as e:
-            self.logger.error(f"Error al buscar en la tabla {table}: {e}")
-            return []
-        except Exception as e:
-            self.logger.warning(f"No se encontraron resultados en la tabla {table} para los criterios: {search_criteria}")
-            return []
-    """
+
     def searchAllTable(self, table, search_criteria, columns="*") -> list:
         where_clause = " AND ".join([f"{col} = ?" for col in search_criteria.keys()])
         sql = f"SELECT {columns} FROM {table} WHERE {where_clause}"
@@ -188,122 +168,6 @@ class DBManager:
         except Exception as e:
             self.logger.warning(f"No se encontraron resultados en la tabla {table} para los criterios: {search_criteria}")
             return []
-
-    def exportToCSV(self, table, filename):
-        query = f"SELECT * FROM {table}"
-        self.cursor.execute(query)
-        try:
-            rows = self.cursor.fetchall()
-            with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
-                csvwriter = csv.writer(csvfile)
-                csvwriter.writerow([desc[0] for desc in self.cursor.description])  # Write headers
-                csvwriter.writerows(rows)
-            self.logger.info(f"Datos de la tabla {table} exportados correctamente a {filename}.")
-        except pyodbc.Error as e:
-            self.logger.error(f"Error al exportar los datos de la tabla {table} a {filename}: {e}")
-        
-    def fetchData(self, table, n):
-        query = f"""
-            WITH CTE AS (
-                SELECT *, ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS rn 
-                FROM {table}
-            )
-            SELECT * FROM CTE WHERE rn = ?
-        """
-        
-        try:
-            self.cursor.execute(query, (n,))  # Use n instead of i
-            row = self.cursor.fetchone()
-            
-            if row:
-                self.logger.info(f"Datos obtenidos de la fila en la posición {n} de la tabla {table}. Con PK = {row[0]}")
-                return row  # Return the row at position n
-            else:
-                self.logger.warning(f"Índice {n} fuera de rango para la tabla {table}.")
-                return None
-        
-        except pyodbc.Error as e:
-            self.logger.error(f"Error al obtener datos de la tabla {table}: {str(e)}")
-            return None
-        except (TypeError, ValueError) as e:
-            self.logger.error(f"Error de tipo o valor: {str(e)}")
-            return None
-        
-    def truncateTable(self, table):
-        sql = f"TRUNCATE TABLE {table}"
-        try:
-            self.cursor.execute(sql)
-            self.cnxn.commit()
-            self.logger.info(f"Todos los datos de la tabla {table} han sido eliminados.")
-        except pyodbc.Error as e:
-            self.logger.error(f"Error al truncar la tabla {table}: {e}")
-
-    def createTable(self, table_name, columns_definition):
-        sql = f"CREATE TABLE {table_name} ({columns_definition})"
-        try:
-            self.cursor.execute(sql)
-            self.cnxn.commit()
-            self.logger.info(f"Tabla {table_name} creada correctamente.")
-        except pyodbc.Error as e:
-            self.logger.error(f"Error al crear la tabla {table_name}: {e}")
-
-    def dropTable(self, table_name):
-        sql = f"DROP TABLE {table_name}"
-        try:
-            self.cursor.execute(sql)
-            self.cnxn.commit()
-            self.logger.info(f"Tabla {table_name} eliminada correctamente.")
-        except pyodbc.Error as e:
-            self.logger.error(f"Error al eliminar la tabla {table_name}: {e}")
-
-    def getTableSize(self, table_name):
-        sql = f"SELECT COUNT(*) FROM {table_name}"
-        try:
-            self.cursor.execute(sql)
-            size = self.cursor.fetchone()[0]
-            self.logger.info(f"El tamaño de la tabla {table_name} es {size} filas.")
-            return size
-        except pyodbc.Error as e:
-            self.logger.error(f"Error al obtener el tamaño de la tabla {table_name}: {e}")
-            return None
-        
-    def comp(self):
-        for n in range(0, 8000):
-            cod = self.fetchData("Codigos", n)
-            exp = self.fetchData("Licitaciones", n)
-            if cod[0] != exp[0]:
-                print(f"Error in {n}: {cod[0]} | {exp[0]}")
-
-    def deleteLog(self):
-        try:
-            if os.path.exists(log_file_path):
-                os.remove(log_file_path)
-                self.logger.info("El archivo de log ha sido eliminado manualmente.")
-            else:
-                print("El archivo de log no existe.")
-        except Exception as e:
-            print(f"Error al intentar eliminar el archivo de log: {e}")
-
-    def intersection(self, table1, table2):
-        sql = f"""
-            SELECT * FROM {table1}
-            INTERSECT
-            SELECT * FROM {table2}
-        """
-        try:
-            self.cursor.execute(sql)
-            rows = self.cursor.fetchall()
-            self.logger.info(f"Intersección entre {table1} y {table2}: {rows}")
-            return rows
-        except pyodbc.Error as e:
-            self.logger.error(f"Error al obtener la intersección entre {table1} y {table2}: {e}")
-            return []
-        
-    def fetchMaxValue(self, table_name, column_name):
-        query = f"SELECT MAX({column_name}) FROM {table_name}"
-        self.cursor.execute(query)
-        result = self.cursor.fetchone()
-        return result[0] if result else None
 
     def insertNewUpdate(self):
         try:
@@ -346,9 +210,3 @@ class DBManager:
         except Exception as e:
             self.logger.error(f"Error al obtener el complemento de la intersección entre las PK de {table1} y {table2}: {e}")
             return []
-
-
-if __name__ == "__main__":   
-    db = DBManager()
-    db.openConnection()
-    db.viewTable("Licitaciones_test")

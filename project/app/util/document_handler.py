@@ -7,9 +7,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 import os
 import pdfplumber
 import re
-from sentence_transformers import SentenceTransformer, util
 from tqdm import tqdm
-import sys
 
 def idDocType(title):
     parts = title.split('.')
@@ -74,62 +72,6 @@ def spliter(ant, text, size = 800, overlap=400):
     texts = text_splitter.split_text(ant)
     texts[-1] = texts[-1] + text[:overlap]
     return texts
-
-def semantic_chunking(ant_text, text, chunk_size=800, overlap=400, similarity_threshold=0.4):
-    """
-    Realiza chunking semántico considerando el texto de la página actual y el de la siguiente.
-    :param ant_text: Texto de la página anterior.
-    :param text: Texto de la página actual.
-    :param chunk_size: Tamaño máximo de cada chunk.
-    :param overlap: Cantidad de texto superpuesto entre chunks.
-    :param similarity_threshold: Umbral de similitud para agrupar oraciones en un chunk.
-    :return: Lista de chunks semánticos.
-    """
-    model = SentenceTransformer('all-MiniLM-L6-v2')
-
-    # Combinar el texto de la página anterior y la actual
-    combined_text = ant_text + " " + text
-
-    # Dividir el texto combinado en oraciones
-    sentences = combined_text.split(". ")
-    embeddings = model.encode(sentences, convert_to_tensor=True)
-
-    chunks = []
-    current_chunk = []
-    current_embedding = None
-
-    for i, sentence in enumerate(sentences):
-        sentence_embedding = embeddings[i]
-
-        if current_chunk:
-            # Calcular la similitud con el chunk actual
-            similarity = util.cos_sim(current_embedding, sentence_embedding).item()
-
-            # Condiciones para crear un nuevo chunk
-            if similarity < similarity_threshold or len(" ".join(current_chunk)) + len(sentence) > chunk_size:
-                # Si la similitud es baja o el chunk excede el tamaño, crear un nuevo chunk
-                chunks.append(" ".join(current_chunk))
-                current_chunk = [sentence]
-                current_embedding = sentence_embedding
-            else:
-                # Agregar la oración al chunk actual
-                current_chunk.append(sentence)
-                current_embedding = (current_embedding + sentence_embedding) / 2
-        else:
-            # Inicializar el primer chunk
-            current_chunk.append(sentence)
-            current_embedding = sentence_embedding
-
-    # Agregar el último chunk
-    if current_chunk:
-        chunks.append(" ".join(current_chunk))
-
-    # Ajustar el último chunk para incluir el texto de la siguiente página
-    if chunks:
-        chunks[-1] += " " + text[:overlap]
-
-    return chunks
-
 
 def download_to_json(url):
     try:
@@ -223,32 +165,3 @@ def download_to_json(url):
     except Exception as e:
         print(f"Error al convertir el documento a JSON: {e}")
         return None
-
-
-def main():
-    
-    odt = "https://contrataciondelestado.es/wps/wcm/connect/PLACE_es/Site/area/docAccCmpnt?srv=cmpnt&cmpntname=GetDocumentsById&source=library&DocumentIdParam=a9af0a63-71e1-4f05-b71c-55e7a7e1c107"
-    pdf = "https://contrataciondelestado.es/wps/wcm/connect/PLACE_es/Site/area/docAccCmpnt?srv=cmpnt&cmpntname=GetDocumentsById&source=library&DocumentIdParam=ed28a294-d582-4936-84d5-3364242e1f8b"
-    pdf_2 = "https://contrataciondelestado.es/wps/wcm/connect/PLACE_es/Site/area/docAccCmpnt?srv=cmpnt&cmpntname=GetDocumentsById&source=library&DocumentIdParam=69c6ec11-3826-4b71-becc-d187156635cf"
-    docx = "https://contrataciondelestado.es/wps/wcm/connect/PLACE_es/Site/area/docAccCmpnt?srv=cmpnt&cmpntname=GetDocumentsById&source=library&DocumentIdParam=0cf6ca6f-add4-4d37-a48d-9e33e72e2adb"
-    #text_file_path_odt = download_and_convert_to_text(odt, "odt")
-    # print("odt", text_file_path_odt)
-    
-    import os
-
-    # Suppress output
-    with open(os.devnull, 'w') as devnull:
-        old_stdout = sys.stdout
-        sys.stdout = devnull
-        try:
-            # Code that generates unwanted output
-            download_to_json(pdf_2)
-        finally:
-            sys.stdout = old_stdout
-
-    # print("pdf", text_file_path_pdf)
-    # text_file_path_docx = download_and_convert_to_text(docx, "docx")
-    #print("docx", text_file_path_docx)
-
-if __name__ == "__main__":
-    main()

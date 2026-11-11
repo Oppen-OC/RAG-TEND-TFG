@@ -41,13 +41,6 @@ def _json_body(request):
         return {}
     return data if isinstance(data, dict) else {}
 
-cod_documento = ""
-
-def home(request):
-    # Funcion que devuelve un string a modo de respuesta
-    return redirect('app:licitaciones')
-
-
 @login_required
 def licitaciones_view(request):
     db = DBManager()
@@ -107,111 +100,8 @@ def licitaciones_view(request):
         cod = licitacion["COD"]
         data = db.searchTable("AnexoI", {"COD": cod})
         Modificado = db.searchTable("Documentos", {"COD": cod})[6] if db.searchTable("Documentos", {"COD": cod}) else ""
-        if not data:
-            # Si no hay datos, agregar claves con valores vacíos
-            licitacion.update({
-                "Regulacion_armonizada": "",
-                "Sometido_recurso_especial": "",
-                "Plazo_ejecución": "",
-                "Presupuesto_sinIVA": "",
-                "Presupuesto_conIVA": "",
-                "Importe_IVA": "",
-                "Sistema_Retribucion": "",
-                "Valor_estimado": "",
-                "Revision_precios": "",
-                "Garantia_definitiva": "",
-                "Garantia_provisional": "",
-                "Admisibilidad_variantes": "",
-                "Clasificacion": "",
-                "Grupo": "",
-                "Subgrupo": "",
-                "Categoria": "",
-                "Criterio_Solvencia_economica": "",
-                "Criterio_Solvencia_tecnica": "",
-                "Condiciones_especiales": "",
-                "Penalidad_incumplimiento": "",
-                "Forma_pago": "",
-                "Causas_modificacion": "",
-                "Plazo_garantia": "",
-                "Contratacion_precio_unit": "",
-                "Tanto_alzado": "",
-                "Tanto_alzado_con": "",
-                "Criterio_juicio_val": "",
-                "Evaluables_autom": "",
-                "Criterio_ecónomico": "",
-                "Obligaciones_ambientales": "",
-                "Regimen_penalidades": "",
-                "Ambiental": "",
-                "Tecnico": "",
-                "Precio": "",
-                "Garantia": "",
-                "Experiencia": "",
-                "Calidad": "",
-                "Social": "",
-                "Seguridad": "",
-                "Juicio_valor": "",
-                "Formula_precio": "",
-                "Formula_JuicioValor": "",
-                "Criterios_valores_anormales": "",
-                "Infraccion_grave": "",
-                "Gastos_desistimiento": "",
-                "Contratacion_control": "",
-                "Tareas_criticas": "",
-                "Modificado": Modificado,
-
-            })
-        else:
-            # Si hay datos, agregar los valores correspondientes
-            licitacion.update({
-                "Regulacion_armonizada": data[1],
-                "Sometido_recurso_especial": data[2],
-                "Plazo_ejecución": data[3],
-                "Presupuesto_sinIVA": data[4],
-                "Presupuesto_conIVA": data[5],
-                "Importe_IVA": data[6],
-                "Sistema_Retribucion": data[7],
-                "Valor_estimado": data[8],
-                "Revision_precios": data[9],
-                "Garantia_definitiva": data[10],
-                "Garantia_provisional": data[11],
-                "Admisibilidad_variantes": data[12],
-                "Clasificacion": data[13],
-                "Grupo": data[14],
-                "Subgrupo": data[15],
-                "Categoria": data[16],
-                "Criterio_Solvencia_economica": data[17],
-                "Criterio_Solvencia_tecnica": data[18],
-                "Condiciones_especiales": data[19],
-                "Penalidad_incumplimiento": data[20],
-                "Forma_pago": data[21],
-                "Causas_modificacion": data[22],
-                "Plazo_garantia": data[23],
-                "Contratacion_precio_unit": data[24],
-                "Tanto_alzado": data[25],
-                "Tanto_alzado_con": data[26],
-                "Criterio_juicio_val": data[27],
-                "Evaluables_autom": data[28],
-                "Criterio_ecónomico": data[29],
-                "Obligaciones_ambientales": data[30],
-                "Regimen_penalidades": data[31],
-                "Ambiental": data[32],
-                "Tecnico": data[33],
-                "Precio": data[34],
-                "Garantia": data[35],
-                "Experiencia": data[36],
-                "Calidad": data[37],
-                "Social": data[38],
-                "Seguridad": data[39],
-                "Juicio_valor": data[40],
-                "Formula_precio": data[41],
-                "Formula_JuicioValor": data[42],
-                "Criterios_valores_anormales": data[43],
-                "Infraccion_grave": data[44],
-                "Gastos_desistimiento": data[45],
-                "Contratacion_control": data[46],
-                "Tareas_criticas": data[47],
-                "Modificado": Modificado,
-            })
+        valores = data[1:] if data else [""] * (len(CAMPOS_ANEXO) - 1)
+        licitacion.update(zip(CAMPOS_ANEXO[1:], valores), Modificado=Modificado)
 
     db.closeConnection()
 
@@ -236,8 +126,6 @@ def invertir_dia_mes(fecha):
         nueva_fecha += f" {fecha_partes[1]}"
 
     return nueva_fecha
-
-from django.contrib.auth.decorators import login_required
 
 @login_required
 def user_settings(request):
@@ -288,136 +176,6 @@ def cambiar_password(request):
     form.save()
     update_session_auth_hash(request, form.user)
     return JsonResponse({'success': True})
-
-def mostrar_anexo_i(cod):
-
-    db = DBManager()
-    db.openConnection()
-
-    data = db.searchTable("AnexoI", {"COD": cod.replace("-", "/")})
-    data1 = db.searchTable("anexoI_fuentes", {"COD":  cod.replace("-", "/")})
-
-    if data == []:
-        # Carga el anexo I a la base de datos
-        from app.util.main import main as util_main
-        util_main(cod)
-        data = db.searchTable("AnexoI", {"COD": cod})
-        data1 = db.searchTable("AnexoI_fuentes", {"COD": cod})
-
-    documentos = db.searchTable("Documentos", {"COD": cod})
-
-    if not data:
-        return JsonResponse({'error': 'Licitación no encontrada'}, status=404)
-
-    db.closeConnection()
-
-    anexoI = {
-        "COD": data[0],
-        "Regulacion_armonizada": data[1],
-        "Sometido_recurso_especial": data[2],
-        "Plazo_ejecución": data[3],
-        "Presupuesto_sinIVA": data[4],
-        "Presupuesto_conIVA": data[5],
-        "Importe_IVA": data[6],
-        "Sistema_Retribucion": data[7],
-        "Valor_estimado": data[8],
-        "Revision_precios": data[9],
-        "Garantia_definitiva": data[10],
-        "Garantia_provisional": data[11],
-        "Admisibilidad_variantes": data[12],
-        "Clasificacion": data[13],
-        "Grupo": data[14],
-        "Subgrupo": data[15],
-        "Categoria": data[16],
-        "Criterio_Solvencia_economica": data[17],
-        "Criterio_Solvencia_tecnica": data[18],
-        "Condiciones_especiales": data[19],
-        "Penalidad_incumplimiento": data[20],
-        "Forma_pago": data[21],
-        "Causas_modificacion": data[22],
-        "Plazo_garantia": data[23],
-        "Contratacion_precio_unit": data[24],
-        "Tanto_alzado": data[25],
-        "Tanto_alzado_con": data[26],
-        "Criterio_juicio_val": data[27],
-        "Evaluables_autom": data[28],
-        "Criterio_ecónomico": data[29],
-        "Obligaciones_ambientales": data[30],
-        "Regimen_penalidades": data[31],
-        "Ambiental": data[32],
-        "Tecnico": data[33],
-        "Precio": data[34],
-        "Garantia": data[35],
-        "Experiencia": data[36],
-        "Calidad": data[37],
-        "Social": data[38],
-        "Seguridad": data[39],
-        "Juicio_valor": data[40],
-        "Formula_precio": data[41],
-        "Formula_JuicioValor": data[42],
-        "Criterios_valores_anormales": data[43],
-        "Infraccion_grave": data[44],
-        "Gastos_desistimiento": data[45],
-        "Contratacion_control": data[46],
-        "Tareas_criticas": data[47],
-        "Modificado": documentos[6]
-    }    
-
-    anexoI_fuentes = {
-        "COD": data1[0],
-        "Regulacion_armonizada": data1[1],
-        "Sometido_recurso_especial": data[2],
-        "Plazo_ejecución": data1[3],
-        "Presupuesto_sinIVA": data1[4],
-        "Presupuesto_conIVA": data1[5],
-        "Importe_IVA": data1[6],
-        "Sistema_Retribucion": data1[7],
-        "Valor_estimado": data1[8],
-        "Revision_precios": data1[9],
-        "Garantia_definitiva": data1[10],
-        "Garantia_provisional": data1[11],
-        "Admisibilidad_variantes": data1[12],
-        "Clasificacion": data1[13],
-        "Grupo": data1[14],
-        "Subgrupo": data1[15],
-        "Categoria": data1[16],
-        "Criterio_Solvencia_economica": data1[17],
-        "Criterio_Solvencia_tecnica": data1[18],
-        "Condiciones_especiales": data1[19],
-        "Penalidad_incumplimiento": data1[20],
-        "Forma_pago": data1[21],
-        "Causas_modificacion": data1[22],
-        "Plazo_garantia": data1[23],
-        "Contratacion_precio_unit": data1[24],
-        "Tanto_alzado": data1[25],
-        "Tanto_alzado_con": data1[26],
-        "Criterio_juicio_val": data1[27],
-        "Evaluables_autom": data1[28],
-        "Criterio_ecónomico": data1[29],
-        "Obligaciones_ambientales": data1[30],
-        "Regimen_penalidades": data1[31],
-        "Ambiental": data1[32],
-        "Tecnico": data1[33],
-        "Precio": data1[34],
-        "Garantia": data1[35],
-        "Experiencia": data1[36],
-        "Calidad": data1[37],
-        "Social": data1[38],
-        "Seguridad": data1[39],
-        "Juicio_valor": data1[40],
-        "Formula_precio": data1[41],
-        "Formula_JuicioValor": data1[42],
-        "Criterios_valores_anormales": data1[43],
-        "Infraccion_grave": data1[44],
-        "Gastos_desistimiento": data1[45],
-        "Contratacion_control": data1[46],
-        "Tareas_criticas": data1[47],
-        "Modificado": documentos[6]
-    }
-
-    return anexoI, anexoI_fuentes
-
-
 
 @login_required
 def detalles_licitacion(request, cod):
@@ -475,59 +233,7 @@ def detalles_licitacion(request, cod):
 
     db.closeConnection()
 
-    if data1:
-        anexoI_fuentes = {
-            "COD": data1[0],
-            "Regulacion_armonizada": data1[1],
-            "Sometido_recurso_especial": data1[2],
-            "Plazo_ejecución": data1[3],
-            "Presupuesto_sinIVA": data1[4],
-            "Presupuesto_conIVA": data1[5],
-            "Importe_IVA": data1[6],
-            "Sistema_Retribucion": data1[7],
-            "Valor_estimado": data1[8],
-            "Revision_precios": data1[9],
-            "Garantia_definitiva": data1[10],
-            "Garantia_provisional": data1[11],
-            "Admisibilidad_variantes": data1[12],
-            "Clasificacion": data1[13],
-            "Grupo": data1[14],
-            "Subgrupo": data1[15],
-            "Categoria": data1[16],
-            "Criterio_Solvencia_economica": data1[17],
-            "Criterio_Solvencia_tecnica": data1[18],
-            "Condiciones_especiales": data1[19],
-            "Penalidad_incumplimiento": data1[20],
-            "Forma_pago": data1[21],
-            "Causas_modificacion": data1[22],
-            "Plazo_garantia": data1[23],
-            "Contratacion_precio_unit": data1[24],
-            "Tanto_alzado": data1[25],
-            "Tanto_alzado_con": data1[26],
-            "Criterio_juicio_val": data1[27],
-            "Evaluables_autom": data1[28],
-            "Criterio_ecónomico": data1[29],
-            "Obligaciones_ambientales": data1[30],
-            "Regimen_penalidades": data1[31],
-            "Ambiental": data1[32],
-            "Tecnico": data1[33],
-            "Precio": data1[34],
-            "Garantia": data1[35],
-            "Experiencia": data1[36],
-            "Calidad": data1[37],
-            "Social": data1[38],
-            "Seguridad": data1[39],
-            "Juicio_valor": data1[40],
-            "Formula_precio": data1[41],
-            "Formula_JuicioValor": data1[42],
-            "Criterios_valores_anormales": data1[43],
-            "Infraccion_grave": data1[44],
-            "Gastos_desistimiento": data1[45],
-            "Contratacion_control": data1[46],
-            "Tareas_criticas": data1[47],
-        }
-    else:
-        anexoI_fuentes = {k: "" for k in CAMPOS_ANEXO}
+    anexoI_fuentes = dict(zip(CAMPOS_ANEXO, data1)) if data1 else dict.fromkeys(CAMPOS_ANEXO, "")
 
     pliego_administrativo_url = documentos[2] if documentos else ""
     anexo_url = documentos[1] if documentos else ""
@@ -545,8 +251,6 @@ def detalles_licitacion(request, cod):
 
     return render(request, 'detalles_licitacion.html', contexto)
 
-
-import json
 
 @login_required
 def alertas(request):
@@ -572,34 +276,6 @@ def alertas(request):
         alertas.append(alerta)
 
     return render(request, 'alertas.html', {'alertas': alertas})
-
-@login_required
-def ajustar_filtro(request, filtro_id):
-    if request.method == 'POST':
-        # Obtén los datos del formulario
-        nombre = request.POST.get('nombre')
-        frecuencia = request.POST.get('frecuencia')
-        activo = request.POST.get('activo') == 'on'
-
-        # Aquí puedes actualizar la base de datos con los nuevos valores
-        # Por ejemplo:
-        # alerta = Alerta.objects.get(id=filtro_id)
-        # alerta.nombre = nombre
-        # alerta.frecuencia = frecuencia
-        # alerta.activo = activo
-        # alerta.save()
-
-        # Responde con los datos actualizados
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'id': filtro_id,
-                'nombre': nombre,
-                'frecuencia': frecuencia,
-                'activo': activo,
-            })
-
-    # Si no es una solicitud AJAX, redirige a la lista de alertas
-    return redirect('app:alertas')
 
 @login_required
 def mis_licitaciones(request):

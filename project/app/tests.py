@@ -1,6 +1,6 @@
 """Tests de seguridad de las vistas. No necesitan SQL Server:
 
-    DB_ENGINE=sqlite DISABLE_PERIODIC=1 python project/manage.py test app
+    DB_ENGINE=sqlite python project/manage.py test app
 
 DBManager (pyodbc contra SQL Server) se sustituye por un mock en todas las pruebas.
 """
