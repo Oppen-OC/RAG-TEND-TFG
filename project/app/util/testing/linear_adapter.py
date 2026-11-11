@@ -1,5 +1,6 @@
 import chromadb
 import os
+UTIL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 import json
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -101,7 +102,7 @@ class chromaTester:
         }
     
 class uselessData:
-    def __init__(self, useless_data_path = r"D:\WINDOWS\Escritorio\TFG\project\app\util\testing\randomData.pdf"):
+    def __init__(self, useless_data_path = os.path.join(UTIL_DIR, "testing/randomData.pdf")):
         self.useless_data_path = useless_data_path
         self.useless_chunks = self.get_chunks()
 
@@ -251,7 +252,7 @@ class AdapterModelTesting:
         }
 
         # Save the combined dictionary
-        adapter_path = rf'D:\WINDOWS\Escritorio\TFG\project\app\util\testing\models\linear_adapter_{num_epochs}epoch.pth'
+        adapter_path = os.path.join(UTIL_DIR, f"testing/models/linear_adapter_{num_epochs}epoch.pth")
         torch.save(save_dict, adapter_path)
         
     # Function to encode query using the adapter
@@ -348,13 +349,13 @@ if __name__ == "__main__":
 
     base_model = SentenceTransformer('all-MiniLM-L6-v2')
 
-    with open(r"D:\WINDOWS\Escritorio\TFG\project\app\util\testing\json_files\val_data_5f.json", 'r', encoding='utf-8') as f:
+    with open(os.path.join(UTIL_DIR, "testing/json_files/val_data_5f.json"), 'r', encoding='utf-8') as f:
         validation_data = json.load(f)
 
-    with open(r"D:\WINDOWS\Escritorio\TFG\project\app\util\testing\json_files\train_data_5f.json", 'r', encoding='utf-8') as f:
+    with open(os.path.join(UTIL_DIR, "testing/json_files/train_data_5f.json"), 'r', encoding='utf-8') as f:
         train_data = json.load(f)
 
-    adapter_path = r'D:\WINDOWS\Escritorio\TFG\project\app\util\testing\models\linear_adapter_V2_E30_B32_L0.003.pth'
+    adapter_path = os.path.join(UTIL_DIR, "testing/models/linear_adapter_V2_E30_B32_L0.003.pth")
 
     chromaTester(base_model, validation_data)
 

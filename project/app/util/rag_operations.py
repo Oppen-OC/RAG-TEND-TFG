@@ -14,6 +14,7 @@ import spacy
 import json
 import time
 import os
+UTIL_DIR = os.path.dirname(os.path.abspath(__file__))
 import re
 import gc
 
@@ -385,7 +386,7 @@ class RAG:
         return indices, scores
 
     def encode_query_custom(self, query):
-        loaded_dict = torch.load(r"D:\WINDOWS\Escritorio\TFG\project\app\util\testing\models\model_E30_B64_L2e-05.pth"
+        loaded_dict = torch.load(os.path.join(UTIL_DIR, "testing/models/model_E30_B64_L2e-05.pth")
             ,map_location=torch.device('cpu')
         )
         base_model = SentenceTransformer('all-MiniLM-L6-v2') 
