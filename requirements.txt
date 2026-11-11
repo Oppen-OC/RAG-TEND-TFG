@@ -22,6 +22,7 @@ cymem==2.0.11
 defusedxml==0.7.1
 distro==1.9.0
 Django==5.0.14
+django-widget-tweaks==1.5.1
 dotenv==0.9.9
 durationpy==0.10
 fastapi==0.115.9

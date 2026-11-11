@@ -1,5 +1,5 @@
 from app.util.db_manager import DBManager
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.db import transaction
@@ -430,7 +430,7 @@ def detalles_licitacion(request, cod):
     # Verificar si se encontró la licitación
     if not data:
         db.closeConnection()
-        return render(request, '404.html', {})
+        raise Http404("Licitación no encontrada")
 
     documentos = db.searchTable("Documentos", {"COD": cod})
 
@@ -737,7 +737,12 @@ def crear_alerta(request):
         db = DBManager()
         db.openConnection()
         try:
-            db.insertDb("alertas", [request.user.username, nombre, 1, json.dumps(condiciones_json)])
+            # INSERT directo: insertDb se traga los errores y la vista respondería éxito sin guardar
+            db.cursor.execute(
+                "INSERT INTO alertas ([user], nombre, activo, condiciones) VALUES (?, ?, ?, ?)",
+                (request.user.username, nombre, 1, json.dumps(condiciones_json)),
+            )
+            db.cnxn.commit()
         finally:
             db.closeConnection()
     except Exception:
@@ -791,7 +796,12 @@ def guardar_anexo(request):
         db = DBManager()
         db.openConnection()
         try:
-            db.insertDb("anexos_guardados", [cod_licitacion, request.user.username])
+            # INSERT directo: insertDb se traga los errores y la vista respondería éxito sin guardar
+            db.cursor.execute(
+                "INSERT INTO anexos_guardados (cod_licitacion, [user]) VALUES (?, ?)",
+                (cod_licitacion, request.user.username),
+            )
+            db.cnxn.commit()
         finally:
             db.closeConnection()
     except Exception:
