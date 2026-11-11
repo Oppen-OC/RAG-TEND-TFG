@@ -60,6 +60,55 @@ class SeguridadVistasTests(TestCase):
         self.assertIn("[user] = ?", sql)
         self.assertEqual(params, (7, "ana"))
 
+    def test_crear_alerta_usa_el_usuario_de_la_sesion(self, db):
+        cursor = db.return_value.cursor
+        self.client.force_login(self.user)
+
+        r = self.client.post(reverse("app:crear_alerta"), {"nombre_alerta": "a", "condiciones": "[]", "user": "otro"})
+
+        self.assertEqual(r.status_code, 200)
+        sql, params = cursor.execute.call_args.args
+        self.assertIn("INSERT INTO alertas", sql)
+        self.assertEqual(params[0], "ana")
+
+    def test_guardar_anexo_usa_el_usuario_de_la_sesion(self, db):
+        cursor = db.return_value.cursor
+        self.client.force_login(self.user)
+
+        r = self.client.post(reverse("app:guardar_anexo"), {"cod_licitacion": "X/1", "user": "otro"})
+
+        self.assertEqual(r.status_code, 200)
+        sql, params = cursor.execute.call_args.args
+        self.assertIn("INSERT INTO anexos_guardados", sql)
+        self.assertEqual(params, ("X/1", "ana"))
+
+    def test_insert_fallido_no_se_notifica_como_exito(self, db):
+        db.return_value.cursor.execute.side_effect = Exception("fallo de BD")
+        self.client.force_login(self.user)
+        casos = {
+            "crear_alerta": {"nombre_alerta": "a", "condiciones": "[]"},
+            "guardar_anexo": {"cod_licitacion": "X/1"},
+        }
+        for name, data in casos.items():
+            with self.subTest(name), self.assertLogs("app.views", "ERROR"):
+                r = self.client.post(reverse(f"app:{name}"), data)
+                self.assertEqual(r.status_code, 500)
+                self.assertEqual(r.json(), {"success": False, "error": "Error interno"})
+
+    def test_get_a_endpoint_post_da_405(self, db):
+        self.client.force_login(self.user)
+        for name in ENDPOINTS_POST:
+            with self.subTest(name):
+                self.assertEqual(self.client.get(reverse(f"app:{name}")).status_code, 405)
+        db.assert_not_called()
+
+    def test_detalles_de_licitacion_inexistente_da_404(self, db):
+        db.return_value.searchTable.return_value = []
+        self.client.force_login(self.user)
+        r = self.client.get(reverse("app:detalles_licitacion", args=["NO/EXISTE"]))
+        self.assertEqual(r.status_code, 404)
+        db.return_value.closeConnection.assert_called_once()
+
     def test_eliminar_alerta_ajena_da_404(self, db):
         db.return_value.cursor.rowcount = 0
         self.client.force_login(self.user)
