@@ -3,12 +3,15 @@ import json
 import logging
 import csv
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 cnxn_str_base = (
-    r"DRIVER={ODBC Driver 17 for SQL Server};"
-    r"SERVER=Perceptron3k;"
-    r"DATABASE=TFG;"
-    r"Trusted_Connection=yes;"
+    "DRIVER={ODBC Driver 17 for SQL Server};"
+    f"SERVER={os.getenv('DB_HOST', 'localhost')};"
+    f"DATABASE={os.getenv('DB_NAME', 'TFG')};"
+    "Trusted_Connection=yes;"
 )
 
 # Construct the absolute path to Strings.json
