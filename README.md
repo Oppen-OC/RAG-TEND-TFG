@@ -9,7 +9,7 @@
 ![Playwright](https://img.shields.io/badge/Playwright-scraping-2EAD33?logo=playwright&logoColor=white)
 ![Llama 3.3](https://img.shields.io/badge/LLM-Llama%203.3%2070B-0467DF?logo=meta&logoColor=white)
 
-> Bachelor's thesis, Computer Engineering, Universitat Politècnica de València (2025).
+> Bachelor's thesis, Computer Engineering, Universitat Politècnica de València (2025). [Read the full thesis (Spanish)](docs/thesis/memoria.md).
 
 ![Tender dashboard](docs/thesis/images/VentanaPrincipal.png)
 
@@ -112,7 +112,7 @@ The full schema is in [`database/schema.sql`](database/schema.sql). The core tab
 │   │   └── views.py
 │   └── manage.py
 ├── database/schema.sql      SQL Server schema
-└── docs/thesis/             Full thesis (Spanish): LaTeX source, Markdown and figures
+└── docs/thesis/             Full thesis (Spanish, Markdown) and figures
 ```
 
 ## Running it locally
@@ -151,7 +151,7 @@ DB_ENGINE=sqlite DISABLE_PERIODIC=1 python project/manage.py test app
 
 ## Thesis
 
-The full write-up (in Spanish) covers the state of the art, the requirements analysis, the design decisions (chunking strategies, vector DB comparison, re-ranking), the evaluation and a legal and ethical analysis of web scraping and LLM use under Spanish and EU law. See [`docs/thesis/`](docs/thesis/).
+The full write-up (in Spanish) covers the state of the art, the requirements analysis, the design decisions (chunking strategies, vector DB comparison, re-ranking), the evaluation and a legal and ethical analysis of web scraping and LLM use under Spanish and EU law. Read it in [`docs/thesis/memoria.md`](docs/thesis/memoria.md).
 
 ---
 
