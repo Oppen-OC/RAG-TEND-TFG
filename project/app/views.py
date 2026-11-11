@@ -278,34 +278,6 @@ def alertas(request):
     return render(request, 'alertas.html', {'alertas': alertas})
 
 @login_required
-def ajustar_filtro(request, filtro_id):
-    if request.method == 'POST':
-        # Obtén los datos del formulario
-        nombre = request.POST.get('nombre')
-        frecuencia = request.POST.get('frecuencia')
-        activo = request.POST.get('activo') == 'on'
-
-        # Aquí puedes actualizar la base de datos con los nuevos valores
-        # Por ejemplo:
-        # alerta = Alerta.objects.get(id=filtro_id)
-        # alerta.nombre = nombre
-        # alerta.frecuencia = frecuencia
-        # alerta.activo = activo
-        # alerta.save()
-
-        # Responde con los datos actualizados
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'id': filtro_id,
-                'nombre': nombre,
-                'frecuencia': frecuencia,
-                'activo': activo,
-            })
-
-    # Si no es una solicitud AJAX, redirige a la lista de alertas
-    return redirect('app:alertas')
-
-@login_required
 def mis_licitaciones(request):
     db = DBManager()
     db.openConnection()

@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import TestCase
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 
 from app.views import CAMPOS_ANEXO
 
@@ -109,3 +109,20 @@ class EndpointsJsonTests(TestCase):
         r = self.client.post(reverse("app:get_anexoI_data"), data='{"cod_list": ["X/1"]}', content_type="application/json")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.json(), [dict(zip(CAMPOS_ANEXO, ANEXO))])
+
+
+@patch("app.views.DBManager")
+class FrontendLimpioTests(TestCase):
+    def setUp(self):
+        self.client.force_login(User.objects.create_user("ana", "ana@example.com", PASSWORD))
+
+    def test_ajustar_filtro_ya_no_existe(self, db):
+        with self.assertRaises(NoReverseMatch):
+            reverse("app:ajustar_filtro", args=[1])
+
+    def test_alertas_renderiza_sin_js_muerto(self, db):
+        db.return_value.searchAllTable.return_value = []
+        r = self.client.get(reverse("app:alertas"))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'id="formNuevaAlerta"')
+        self.assertNotContains(r, "ajax-form")
