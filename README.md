@@ -73,7 +73,7 @@ Evaluated on a **random sample of 30 tenders** with [Ragas](https://docs.ragas.i
 | Faithfulness | **0.76** |
 
 - About **70% of all scores are ≥ 0.75**. Weak spots are concentrated in fields that rarely appear in the documents, or that depend on keyword lists (environmental and social criteria, pricing formulas). The thesis analyses each one.
-- **Embedding fine-tuning experiment:** I trained a linear adapter on top of `all-MiniLM-L6-v2` with a synthetic question corpus. It raised Hit Rate@10 to **66.7% (+7.8%)** and MRR by **+6.2%**, but it made query encoding **about 3x slower**. That trade-off is documented in the thesis.
+- **Embedding fine-tuning experiment:** I trained a linear adapter on top of `all-MiniLM-L6-v2` with a synthetic question corpus. On the validation set it raised Hit Rate@10 to **66.7% (+7.8%)** and MRR by **+6.2%**, but it made query encoding **about 3x slower** and did not generalise to other tenders from the same contracting body, so it was left out of the pipeline. The thesis documents both runs.
 - **Throughput:** one annex produces 190-250 chunks and takes about 10-15 minutes end to end (embeddings plus 47 prompts). That is why the thesis design pre-processes tenders on ingestion. In the current code, extraction runs the first time a tender is opened.
 
 ## Data model
